@@ -1,0 +1,133 @@
+openapi: 3.0.4
+info:
+  title: KUSHOP API
+  description: KUSHOP Project from Kasetsart University Sriracha Campus.
+  version: 0.1
+servers:
+  - url: http://localhost:3000/
+    # description: My Localhost
+paths:
+  /products:
+    # GET All Product
+    get:
+      summary: Returns a list all of products.
+      # สามารถอธิบายรายละเอียดได้
+      # เครื่องหมาย | บอกว่าเป็นหลายบรรทัด
+      description: |
+        List all products in array of object format.<br>
+        Each product contains details like product ID, name, price, etc.
+      # ส่วนอธิบายว่าจะส่ง Status Cose อะไรกลับไปบ้าง
+      responses:
+        '200':    # status code
+          description: A JSON array of Products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  # อ้างอิงไปที่ Component เพื่อแสดงรายละเอียด
+                  $ref: '#/components/schemas/products'  
+        # POST new product
+    post:
+      summary: Creates a new Product.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new_product'   #component for create
+      responses:
+        '201':
+          description: Product is created.
+        '409':
+          description: Product ID is existed.
+        '500':
+          description: Server Error
+
+  /products/{id}:
+    # GET Product by ID
+    get:
+      summary: Returns the specify products.
+      # สามารถอธิบายรายละเอียดได้
+      # เครื่องหมาย |
+      description: |
+        Show a products in array of object format
+      # ส่วนกำหนด Parameter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type : string
+      # ส่วนอธิบายว่าจะส่ง Status Cose อะไรกลับไปบ้าง
+      responses:
+        '200':    # status code
+          description: A JSON array of Products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  # อ้างอิงไปที่ Component เพื่อแสดงรายละเอียด
+                  $ref: '#/components/schemas/products'
+        '404':    # status code
+          description: A product with the specified ID was not found.
+        '500':    # status code
+          description: Server error.  
+
+# กำหนด Component ที่ต้องการแสดงรายละเอียด
+components:
+  schemas:
+    products:
+      type: object
+      properties:
+        pdId:
+          type: string
+        pdName:
+          type: string
+        pdPrice:
+          # integer , number
+          type: number
+        pdRemark:
+          type: string
+        pdTypeId:
+          type: string
+        brandId:
+          type: string
+        brand:
+          $ref: '#/components/schemas/brands'
+        pdt:
+          $ref: '#/components/schemas/productType'
+    # Schema สำหรับ POST
+    new_product:
+      type: object
+      properties:
+        pdId:
+          type: string
+        pdName:
+          type: string
+        pdPrice:
+          # integer , number
+          type: number
+        pdRemark:
+          type: string
+        pdTypeId:
+          type: string
+        brandId:
+          type: string
+    
+    brands:
+      type: object
+      properties:
+        brandId:
+          type: string
+        brandName:
+          type: string 
+    productType:
+      type: object
+      properties:
+        pdTypeId:
+          type: string
+        pdTypeName:
+          type: string
