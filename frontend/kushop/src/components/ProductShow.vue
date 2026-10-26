@@ -29,7 +29,7 @@
                     <button class="btn btn-primary" @click="chkLogin()">
                         <i class="bi bi-cart lead"></i> ใส่ตะกร้า&nbsp;
                     </button>
-                    <button class="btn btn-warning float-end"><i class="bi bi-pencil-fill lead"></i>
+                    <button v-if="authStore.isAdmin" class="btn btn-warning float-end"><i class="bi bi-pencil-fill lead"></i>
                         แก้ไข&nbsp;&nbsp;</button>
                 </div>
             </div>
@@ -43,8 +43,10 @@
     import { useRoute } from 'vue-router' //useRoute มีไว้เพื่อ อ่าน ข้อมูล useRouter มีไว้เพื่อ สั่งการ ให้เปลี่ยนComponent
     import { useCartStore } from '@/stores/cartStore';
     import axios from 'axios';
+    import { useAuthStore } from '@/stores/authStore';
     axios.defaults.withCredentials = true
 
+    const authStore = useAuthStore();
     const cartStore = useCartStore()
     const route = useRoute()
     const products=ref([]) //array เก็บข้อมูลสินค้าที่ได้รับกลับมาจาก Backend
@@ -53,6 +55,7 @@
     const memEmail=ref(null)
     const cartId=ref(null)
     const backendMessage=ref(null)
+
 
     // เริ่มทำงานเมื่อเกิดการ mount Component
     onMounted(async ()=>{

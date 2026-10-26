@@ -32,7 +32,7 @@
                     </li>
           <li class="nav-item" v-if="login">
             <a href="#" @click="memLogout()" style="text-decoration: none">
-              <div class="nav-link fw-bold">ลงชื่อออก</div>
+              <div class="nav-link fw-bold">Logout</div>
             </a>
           </li>
           <li class="nav-item" v-if="!login">
