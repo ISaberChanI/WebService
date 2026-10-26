@@ -27,7 +27,7 @@
                             <tr>
                                 <td><h5>ยี่ห้อ</h5></td> <td><h5>{{ pd.brand?.brandName || "ไม่ระบุยี่ห้อ" }}</h5></td>
                             </tr>
-                            <tr>
+                           <tr>
                                 <td><h5>รายละเอียด</h5></td> <td><h5>{{ pd.pdRemark }}</h5></td>
                             </tr>
                         </tbody>
