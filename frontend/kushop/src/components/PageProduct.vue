@@ -83,6 +83,12 @@
 
     const products=ref([])
     const stext=ref("")
+    import { useRouter } from 'vue-router'
+    import { useAuthStore } from '@/stores/authStore'
+
+    // ประกาศตัวแปรใช้งาน
+    const router = useRouter()
+    const authStore = useAuthStore()
 
     onMounted( async()=>{
         await axios.get(`http://localhost:3000/products`)
@@ -101,22 +107,7 @@
         .then(res=>{products.value=res.data})
         .catch(err=>console.log(err.message))
     }
-    import { useAuthStore } from '@/stores/authStore';
-
-    const authStore = useAuthStore();
-
-    const getSumCart = async () => {
-        // 👈 เช็คก่อนว่ามี memEmail หรือยัง ถ้ายังไม่มี (ยังไม่ล็อกอิน) ไม่ต้องยิง API
-        if (!authStore.memEmail) return; 
-
-        try {
-            // 👈 เปลี่ยนจากตัวแปรเดิม เป็น authStore.memEmail
-            const response = await axios.get(`http://localhost:3000/cart/sum/${authStore.memEmail}`);
-            console.log(response.data); // จะได้ { qty: 2, money: 5000 } ที่ถูกต้อง
-        } catch (err) {
-            console.error(err);
-        }
-    };
+    
 
 </script>
 

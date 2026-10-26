@@ -64,6 +64,19 @@
     const backendMessage=ref(null)
 
 
+    // ฟังก์ชันดึงสินค้าตาม Brand ID
+    const getProductsByBrand = async (brandId) => {
+        try {
+            // ⚠️ ต้องมี s ที่ /products/brands/
+            const res = await axios.get(`http://localhost:3000/products/brands/${brandId}`);
+            products.value = res.data;
+            console.log("รายการสินค้าตามแบรนด์:", products.value);
+        } catch (err) {
+            console.error("เกิดข้อผิดพลาด:", err.message);
+        }
+    };
+
+
     // เริ่มทำงานเมื่อเกิดการ mount Component
     onMounted(async ()=>{
         id.value= route.params.pdId

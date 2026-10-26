@@ -8,6 +8,7 @@ import PageMember from "@/components/PageMember.vue"
 import ProductShow from "../components/ProductShow.vue"
 import CartShow from "@/components/CartShow.vue"
 import CartList from "../components/CartList.vue"
+import ProductAdd from "@/components/ProductAdd.vue"
 const routes = [
     {
         path:'/',
@@ -50,6 +51,11 @@ const routes = [
         name:'CartList',
         component:CartList
     },
+    {
+        path: '/product/add',
+        name: 'ProductAdd',
+        component: ProductAdd
+  },
 
 
 ]
