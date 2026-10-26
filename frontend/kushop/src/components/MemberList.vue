@@ -96,6 +96,13 @@
         // รูปภาพไม่สามารถโหลดได้
         imgOK.value = false;
     };
+
+        const searchMember = async ()=>{
+        await axios.get(`http://localhost:3000/members/search/${stext.value}`)
+        .then(res=>{products.value=res.data})
+        .catch(err=>console.log(err.message))
+    }
+
 }
     
 </script>
