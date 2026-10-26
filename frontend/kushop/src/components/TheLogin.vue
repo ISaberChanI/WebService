@@ -2,7 +2,7 @@
     <div class="container">
         <div class=" row mt-5">
         <div class="col-sm-12 col-md-6 col-lg-6 mb-5">
-            <img src="../assets/LogoSRC.png" alt="" width="80%">
+            <img src="../assets/Kizuna Hobby.jpg" alt="" width="80%">
         </div>
         <div class="col-sm-12 col-md-6 col-lg-6 mb3">
             <!-- เมื่อสั่ง Submit ให้เรียก Function handleSubmit -->
