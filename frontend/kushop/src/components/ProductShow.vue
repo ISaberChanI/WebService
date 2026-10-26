@@ -3,10 +3,17 @@
         <div v-for="(pd, pdId) in products" :key="pdId" class="mt-5">
             <div class="row ">
                 <div class="col-md-6 col-sm-12 ">
-                    <div class="card mx-auto mb-3" style="width: 18rem; background-color: #1E293B; border: 1px solid #334155;">
-                        <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`" alt=""
-                            class="rounded shadow-sm" >
-                    </div>
+                   <div
+    class="card mx-auto mb-3"
+    style="width: 18rem; height: 280px; background-color: #1E293B; border: 1px solid #334155;"
+>
+    <img
+        :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
+        alt=""
+        class="rounded shadow-sm"
+        style="width: 100%; height: 100%; object-fit: contain; padding: 10px;"
+    >
+</div>
                 </div>
                 <div class="col-md-6 col-sm-12 ">
                     <table class="table table-dark table-borderless" style="background-color: transparent;">
@@ -20,7 +27,7 @@
                             <tr>
                                 <td><h5>ยี่ห้อ</h5></td> <td><h5>{{ pd.brand?.brandName || "ไม่ระบุยี่ห้อ" }}</h5></td>
                             </tr>
-                            <tr>
+                           <tr>
                                 <td><h5>รายละเอียด</h5></td> <td><h5>{{ pd.pdRemark }}</h5></td>
                             </tr>
                         </tbody>
@@ -29,7 +36,7 @@
                     <button class="btn btn-primary" @click="chkLogin()">
                         <i class="bi bi-cart lead"></i> ใส่ตะกร้า&nbsp;
                     </button>
-                    <button class="btn btn-warning float-end"><i class="bi bi-pencil-fill lead"></i>
+                    <button v-if="authStore.isAdmin" class="btn btn-warning float-end"><i class="bi bi-pencil-fill lead"></i>
                         แก้ไข&nbsp;&nbsp;</button>
                 </div>
             </div>
@@ -43,8 +50,10 @@
     import { useRoute } from 'vue-router' //useRoute มีไว้เพื่อ อ่าน ข้อมูล useRouter มีไว้เพื่อ สั่งการ ให้เปลี่ยนComponent
     import { useCartStore } from '@/stores/cartStore';
     import axios from 'axios';
+    import { useAuthStore } from '@/stores/authStore';
     axios.defaults.withCredentials = true
 
+    const authStore = useAuthStore();
     const cartStore = useCartStore()
     const route = useRoute()
     const products=ref([]) //array เก็บข้อมูลสินค้าที่ได้รับกลับมาจาก Backend
@@ -53,6 +62,7 @@
     const memEmail=ref(null)
     const cartId=ref(null)
     const backendMessage=ref(null)
+
 
     // เริ่มทำงานเมื่อเกิดการ mount Component
     onMounted(async ()=>{

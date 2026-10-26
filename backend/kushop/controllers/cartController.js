@@ -120,19 +120,34 @@ export async function postCartDtl(req, res) {
 }
 
 export async function sumCart(req, res) {
-    console.log(`GET SumCart ${req.params.id} is requested `)
-    const result = await database.query({
-        text: `  SELECT SUM(qty) AS qty,SUM(qty*price) AS money
-                FROM "cartDtl" ctd
-                WHERE ctd."cartId" = $1` ,
-        values: [req.params.id] //ค่า Parameter ที่ส่งมา
-    })
-    console.log(result.rows[0])
-    return res.json({
-        id: req.params.id,
-        qty: result.rows[0].qty,
-        money: result.rows[0].money
-    })
+    const { id } = req.params;
+    console.log(`GET SumCart ${id} is requested`);
+
+    // 1. ดักจับกรณี id เป็น undefined หรือไม่ได้ส่งค่ามา ให้คืนค่า 0 ทันที ไม่ต้อง Query DB
+    if (!id || id === 'undefined') {
+        return res.json({ id: null, qty: 0, money: 0 });
+    }
+
+    try {
+        // 2. ใช้ COALESCE ป้องกัน SQL คืนค่า null กรณีตะกร้าว่าง
+        const result = await database.query({
+            text: `SELECT 
+                    COALESCE(SUM(qty), 0) AS qty,
+                    COALESCE(SUM(qty * price), 0) AS money
+                   FROM "cartDtl" ctd
+                   WHERE ctd."cartId" = $1`,
+            values: [id]
+        });
+
+        return res.json({
+            id: id,
+            qty: Number(result.rows[0].qty),
+            money: Number(result.rows[0].money)
+        });
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).json({ message: err.message, qty: 0, money: 0 });
+    }
 }
 
 export async function getCart(req, res) {

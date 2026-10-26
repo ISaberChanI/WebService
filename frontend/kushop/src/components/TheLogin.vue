@@ -48,53 +48,59 @@
 
 
 <script setup>
-    import { onMounted ,ref } from 'vue'; // import function ref มาจาก v
+    import { onMounted, ref } from 'vue';
     import axios from 'axios';
     import { useRouter } from 'vue-router';
     import { useAuthStore } from '@/stores/authStore';
 
-    axios.defaults.withCredentials =true
+    axios.defaults.withCredentials = true;
 
-    const authStore = useAuthStore()
-    const router = useRouter()
-    const loginName=ref(null)
-    const password=ref(null)
-    const login=ref(null)
-    const message=ref(null)
+    const authStore = useAuthStore();
+    const router = useRouter();
+    const loginName = ref(null);
+    const password = ref(null);
+    const login = ref(null);
+    const message = ref(null);
 
-    onMounted(async ()=>{
-        await getMember()
+    onMounted(async () => {
+        await getMember();
         if (login.value) {
             router.push("/pagemember");
         }
-    })
-    const getMember=async ()=>{
-        await axios.get(`http://localhost:3000/members/detail`)
-            .then((res)=>{
-                login.value=res.data.login
-            })
-            .catch(err=>console.log(err.message))
-    }
+    });
 
-    const handleSubmit =async()=>{
-        let members={ // กำหนดค่า
-           loginName:loginName.value, //ค่าที่ส่งให้ Backend
-           password:password.value //ค่าที่ส่งให้ Backend
+    const getMember = async () => {
+        await axios.get(`http://localhost:3000/members/detail`)
+            .then((res) => {
+                login.value = res.data.login;
+                if (res.data.login) {
+                    // 👈 ส่ง res.data.memEmail เพิ่มเข้าไป
+                    authStore.login(res.data.dutyId, res.data.memEmail); 
+                }
+            })
+            .catch(err => console.log(err.message));
+    };
+
+    const handleSubmit = async () => {
+        let members = {
+            loginName: loginName.value,
+            password: password.value
+        };
+        try {
+            const response = await axios.post(`http://localhost:3000/members/login`, members);
+            console.log(response.data);
+            login.value = response.data.login;
+            message.value = response.data.message;
+
+            if (login.value) {
+                // 2. ส่งค่า dutyId จาก response ของ Backend เข้า authStore.login()
+                authStore.login(response.data.dutyId, loginName.value);// หาก Backend ซ้อนไว้ใน user ให้ใช้ response.data.user.dutyId
+                router.push('/pagemember');
+            }
+        } catch (err) {
+            console.log(err);
         }
-        try { // Request POST Method
-          const response = await axios.post(`http://localhost:3000/members/login`,members)
-          console.log(response.data)
-          login.value=response.data.login
-          message.value=response.data.message
-          if(login.value){
-            authStore.login()
-            router.push('/pagemember')
-          }
-        }
-        catch(err){
-          console.log(err)
-        }
-    }
+    };
 </script>
 
 

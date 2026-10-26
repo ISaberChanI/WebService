@@ -1,20 +1,27 @@
 import { defineStore } from "pinia";
-import {ref} from "vue"
-// สร้าง Composition Function เพื่อสร้าง Store เพื่อเก็บ State
-export const useAuthStore = defineStore( 'auth',()=>{
-    // สร้างตัวแปรที่ต้องการสื่อสาร
-    const isLogin =ref(false)
-    // สร้าง Action เพื่อเปลี่ยนแปลงสถานะของตัวแปรนั้นๆ
-    const login=()=>{
-        isLogin.value=true
-        console.log(isLogin.value)
-    }
-    const logout=()=>{
-        isLogin.value=false
-        console.log(isLogin.value)
-    }
+import { ref, computed } from "vue";
 
+export const useAuthStore = defineStore('auth', () => {
+    const isLogin = ref(false);
+    const dutyId = ref(null);
+    const memEmail = ref(null); // 👈 1. เพิ่มตัวแปรเก็บ memEmail
 
-    // ส่งออกState และ Action เพื่อให้ Component อื่นใช้งาน
-    return {isLogin,login,logout }
-})
+    const isAdmin = computed(() => {
+        return isLogin.value && dutyId.value && dutyId.value.toLowerCase() === 'admin';
+    });
+
+    // 👈 2. ปรับฟังก์ชัน login ให้รับ email เข้ามาด้วย
+    const login = (duty, email) => {
+        isLogin.value = true;
+        dutyId.value = duty;
+        memEmail.value = email; 
+    };
+
+    const logout = () => {
+        isLogin.value = false;
+        dutyId.value = null;
+        memEmail.value = null;
+    };
+
+    return { isLogin, dutyId, memEmail, isAdmin, login, logout };
+});

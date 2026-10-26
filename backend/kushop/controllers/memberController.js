@@ -139,7 +139,11 @@ export async function loginMember(req, res) {
                 secure: true,
                 sameSite:'strict'
             })
-            res.json({message:"Login Success",login:true})
+            res.json({
+                message: "Login Success",
+                login: true,
+                dutyId: result.rows[0].dutyId // 👈 เพิ่มบรรทัดนี้
+            });
         }
         else{
             res.clearCookie('token',{
