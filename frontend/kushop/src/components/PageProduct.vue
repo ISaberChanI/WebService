@@ -1,36 +1,75 @@
 <template>
-    <!-- vue.js form ถ้าไม่กำหนด @submit.prevent จะทำการเปลี่ยนหน้าเมือ submit -->
+    <!-- แถบค้นหาและปุ่มเพิ่มสินค้า -->
     <form @submit.prevent="searchProduct()">
         <div class="row align-items-center mb-4">
-            <div class="h1 col-md-6 col-sm-12 text-white">ผลิตภัณฑ์ของเรา</div>
+            <div class="h1 col-md-4 col-sm-12 text-white mb-2 mb-md-0">ผลิตภัณฑ์ของเรา</div>
+            
             <div class="col-md-4 col-sm-6">
-                <input type="text" class="form-control bg-dark text-white border-secondary" v-model="stext" placeholder="ค้นหาสินค้า...">
+                <input 
+                    type="text" 
+                    class="form-control bg-dark text-white border-secondary" 
+                    v-model="stext" 
+                    placeholder="ค้นหาสินค้า..."
+                >
             </div>
-            <div class="col mt-2 mt-md-0">
-                <button class="btn text-white fw-bold" style="background-color: #F97316; border: none;" type="submit" @click="searchProduct()">ค้นหา</button>
-                <button class="btn btn-secondary mx-2 fw-bold" type="button" @click="allProduct()">ALL</button>
+            
+            <div class="col-md-4 col-sm-6 mt-2 mt-sm-0 d-flex align-items-center gap-2">
+                <button class="btn text-white fw-bold text-nowrap" style="background-color: #F97316; border: none;" type="submit">
+                    ค้นหา
+                </button>
+                <button class="btn btn-secondary fw-bold" type="button" @click="allProduct()">
+                    ALL
+                </button>
+
+                <!-- 1. ปุ่มเพิ่มสินค้า (แสดงเฉพาะ Admin) -->
+                <button 
+                    v-if="authStore.isAdmin" 
+                    type="button" 
+                    class="btn btn-success fw-bold text-nowrap"
+                    @click="router.push('/product/add')"
+                >
+                    <i class="bi bi-plus-lg"></i> เพิ่มสินค้า
+                </button>
             </div>
         </div>
     </form>
 
+    <!-- รายการสินค้า -->
     <div class="row">
-        <div v-for="(pd,pdId) in products" :key="pdId" class="col-lg-4 col-md-6 col-sm-12 mt-3">
-            <div class="card shadow-lg" style="width: 18rem; background-color: #1E293B; border: 1px solid #334155;">
-               <img
-    :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
-    class="card-img-top p-2 rounded"
-    :alt="pd.pdName"
-    style="height: 220px; object-fit: contain;"
->
-                <div class="card-body">
+        <div v-for="pd in products" :key="pd.pdId" class="col-lg-4 col-md-6 col-sm-12 mt-3">
+            <!-- เพิ่ม h-100 ให้การ์ดสูงเท่ากันเสมอ -->
+            <div class="card shadow-lg h-100" style="background-color: #1E293B; border: 1px solid #334155;">
+                <img
+                    :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
+                    class="card-img-top p-2 rounded"
+                    :alt="pd.pdName"
+                    style="height: 220px; object-fit: contain;"
+                >
+                <div class="card-body d-flex flex-column">
                     <h5 class="card-title text-white fw-bold">{{ pd.pdName }}</h5>
                     <p class="card-text text-secondary">
                         {{ pd.brand?.brandName || "ไม่ระบุยี่ห้อ" }} - 
                         <span style="color: #F97316;" class="fw-bold">฿{{ pd.pdPrice }}</span>
                     </p>
-                    <router-link :to="{name:'ProductShow',params:{pdId:pd.pdId} }" style="text-decoration: none;">
-                        <div class="btn text-white fw-bold w-100" style="background-color: #F97316; border: none;">ดูรายละเอียด</div>
+                    
+                    <!-- ปุ่มดูรายละเอียด (ดันลงล่างสุดด้วย mt-auto) -->
+                    <router-link 
+                        :to="{ name: 'ProductShow', params: { pdId: pd.pdId } }" 
+                        class="btn text-white fw-bold w-100 mt-auto" 
+                        style="background-color: #F97316; border: none;"
+                    >
+                        ดูรายละเอียด
                     </router-link>
+
+                    <!-- 2. ปุ่มแก้ไข/ลบ สินค้า (แสดงเฉพาะ Admin) -->
+                    <div v-if="authStore.isAdmin" class="mt-2 d-flex gap-2">
+                        <button class="btn btn-sm btn-warning w-50 fw-bold" @click="editProduct(pd.pdId)">
+                            <i class="bi bi-pencil-square"></i> แก้ไข
+                        </button>
+                        <button class="btn btn-sm btn-danger w-50 fw-bold" @click="deleteProduct(pd.pdId)">
+                            <i class="bi bi-trash-fill"></i> ลบ
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -40,6 +79,7 @@
 <script setup>
     import {onMounted, ref} from 'vue'
     import axios from 'axios'
+    
 
     const products=ref([])
     const stext=ref("")
@@ -61,6 +101,22 @@
         .then(res=>{products.value=res.data})
         .catch(err=>console.log(err.message))
     }
+    import { useAuthStore } from '@/stores/authStore';
+
+    const authStore = useAuthStore();
+
+    const getSumCart = async () => {
+        // 👈 เช็คก่อนว่ามี memEmail หรือยัง ถ้ายังไม่มี (ยังไม่ล็อกอิน) ไม่ต้องยิง API
+        if (!authStore.memEmail) return; 
+
+        try {
+            // 👈 เปลี่ยนจากตัวแปรเดิม เป็น authStore.memEmail
+            const response = await axios.get(`http://localhost:3000/cart/sum/${authStore.memEmail}`);
+            console.log(response.data); // จะได้ { qty: 2, money: 5000 } ที่ถูกต้อง
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
 </script>
 

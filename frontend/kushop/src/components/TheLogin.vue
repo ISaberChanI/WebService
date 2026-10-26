@@ -74,8 +74,8 @@
             .then((res) => {
                 login.value = res.data.login;
                 if (res.data.login) {
-                    // 1. ส่ง dutyId เข้า Store เมื่อตรวจพบ Session เดิม (กรณี Refresh หน้าเว็บ)
-                    authStore.login(res.data.dutyId); 
+                    // 👈 ส่ง res.data.memEmail เพิ่มเข้าไป
+                    authStore.login(res.data.dutyId, res.data.memEmail); 
                 }
             })
             .catch(err => console.log(err.message));
@@ -94,7 +94,7 @@
 
             if (login.value) {
                 // 2. ส่งค่า dutyId จาก response ของ Backend เข้า authStore.login()
-                authStore.login(response.data.dutyId); // หาก Backend ซ้อนไว้ใน user ให้ใช้ response.data.user.dutyId
+                authStore.login(response.data.dutyId, loginName.value);// หาก Backend ซ้อนไว้ใน user ให้ใช้ response.data.user.dutyId
                 router.push('/pagemember');
             }
         } catch (err) {
