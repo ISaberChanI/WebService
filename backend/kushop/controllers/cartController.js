@@ -197,3 +197,24 @@ export async function getCartByCus(req, res) {
       })
   }
 }
+
+export async function delCartDtl(req, res) {
+    const { cartId, pdId } = req.params;
+    try {
+        const result = await database.query({
+            text: `DELETE FROM "cartDtl" WHERE "cartId" = $1 AND "pdId" = $2`,
+            values: [cartId, pdId]
+        });
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+        return res.status(200).json({ message: 'Item removed successfully' });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+
+
+

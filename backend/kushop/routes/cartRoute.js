@@ -12,5 +12,6 @@ router.get('/carts/sumcart/:id',cartC.sumCart)
 router.get('/carts/getcart/:id',cartC.getCart)
 router.get('/carts/getcartdtl/:id',cartC.getCartDtl)
 router.post('/carts/getcartbycus',cartC.getCartByCus)
+router.delete('/carts/:cartId/:pdId', cartC.delCartDtl)
 
 export default router

@@ -48,7 +48,7 @@
                     <td class="text-center">{{ ctd.qty }}</td>
                     <td class="text-end fw-bold" style="color: #F97316;">{{ ((ctd.price * ctd.qty)??0).toLocaleString() }}</td>
                     <td class="text-center">
-                        <i class="bi-x-lg text-danger" role="button"></i>
+                        <i class="bi-x-lg text-danger" role="button" @click="deleteCartDtl(ctd)"></i>
                     </td>
                 </tr>
             </tbody>
@@ -119,6 +119,32 @@ const getMember=async ()=>{
         })
         .catch(err=>console.log(err.message))
 }
+
+
+const deleteCartDtl = async (ctd) => {
+    if (!confirm('ยืนยันลบสินค้านี้')) {
+        return
+    }
+
+    try {
+        await axios.delete(
+            `http://localhost:3000/carts/${cartId.value}/${ctd.pdId}`
+        )
+
+        // ลบสินค้าออกจากหน้าจอทันที
+        cartDtl.value = cartDtl.value.filter(
+            item => item.pdId !== ctd.pdId
+        )
+
+        alert('ลบสินค้าเรียบร้อยแล้ว')
+
+    } catch (err) {
+        console.error(err)
+        alert(err.response?.data?.message || 'ไม่สามารถลบสินค้าได้')
+    }
+}
+
+
 </script>
 
 
