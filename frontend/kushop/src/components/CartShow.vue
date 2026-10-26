@@ -46,7 +46,6 @@
                     <td>{{ ctd.pdName }}</td>
                     <td class="text-end">{{ ctd.price }}</td>
                     <td class="text-center">{{ ctd.qty }}</td>
-                    <!-- ยอดรวมต่อรายการเน้นสีส้ม -->
                     <td class="text-end fw-bold" style="color: #F97316;">{{ ((ctd.price * ctd.qty)??0).toLocaleString() }}</td>
                     <td class="text-center">
                         <i class="bi-x-lg text-danger" role="button"></i>
