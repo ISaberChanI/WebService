@@ -3,15 +3,15 @@
         <div v-for="(pd, pdId) in products" :key="pdId" class="mt-5">
             <div class="row ">
                 <div class="col-md-6 col-sm-12 ">
-                    <div class="card mx-auto mb-3" style="width: 18rem">
+                    <div class="card mx-auto mb-3" style="width: 18rem; background-color: #1E293B; border: 1px solid #334155;">
                         <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`" alt=""
                             class="rounded shadow-sm" >
                     </div>
                 </div>
                 <div class="col-md-6 col-sm-12 ">
-                    <table class="table">
+                    <table class="table table-dark table-borderless" style="background-color: transparent;">
                         <tbody>
-                            <tr class="table-secondary">
+                            <tr>
                                 <td><h4>{{ pd.pdId }}</h4></td> <td><h4>{{ pd.pdName }}</h4></td>
                             </tr>
                             <tr>
