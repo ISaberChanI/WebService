@@ -179,3 +179,22 @@ export async function logoutMember(req, res) {
         })
     }
 }
+
+export async function getAllMember(req, res) {
+    console.log(`GET /members is requested.`)
+    try {
+        const strQry = `
+            SELECT m.*
+            FROM members m
+            WHERE m."dutyId" = 'member'
+        `
+        const result = await database.query(strQry)
+        return res.status(200).json(result.rows)
+    }
+    catch (err) {
+        return res.status(500).json({
+            ok: false,
+            message: err.message
+        })
+    }
+}
