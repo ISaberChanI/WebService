@@ -36,8 +36,9 @@
                     <button class="btn btn-primary" @click="chkLogin()">
                         <i class="bi bi-cart lead"></i> ใส่ตะกร้า&nbsp;
                     </button>
-                    <button v-if="authStore.isAdmin" class="btn btn-warning float-end"><i class="bi bi-pencil-fill lead"></i>
-                        แก้ไข&nbsp;&nbsp;</button>
+                    <router-link to="/product" class="btn btn-secondary float-end">
+                        <i class="bi bi-arrow-left lead"></i> กลับหน้าสินค้า
+                    </router-link> 
                 </div>
             </div>
         </div>
