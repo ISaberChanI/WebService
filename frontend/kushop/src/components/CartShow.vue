@@ -14,12 +14,15 @@
                         จำนวนสินค้า {{ ct.sqty }}ชิ้น, ยอดเงิน {{ (ct.sprice??0).toLocaleString() }} บาท
                     </div>
                     <hr />
-                    <a class="btn btn-danger" onclick="return confirm('ยืนยันลบตะกร้า')">
-                        <i class="bi-cart-x-fill"></i> ลบตะกร้าสินค้า
-                    </a>
-                    <a class="btn btn-primary float-end" onclick="return confirm('ยืนยันสั่งสินค้า')">
-                        <i class="bi-currency-dollar"></i> ยืนยันสั่งสินค้า
-                    </a>
+                  <button class="btn btn-danger"
+        @click="deleteCart(ct.cartId)">
+    <i class="bi-cart-x-fill"></i> ลบตะกร้าสินค้า
+</button>
+
+<button class="btn btn-primary float-end"
+        @click="confirmOrder(ct.cartId)">
+    <i class="bi-currency-dollar"></i> ยืนยันสั่งสินค้า
+</button>
                 </div>
             </div> <!--card-->
         </div> <!---v for  -->
@@ -117,6 +120,68 @@ const getMember=async ()=>{
         })
         .catch(err=>console.log(err.message))
 }
+
+
+
+const deleteCart = async (id) => {
+    if (!confirm("ยืนยันลบตะกร้าสินค้าใช่หรือไม่?")) {
+        return;
+    }
+
+    try {
+        console.log("Delete Cart:", id);
+
+        const res = await axios.delete(
+            `http://localhost:3000/deletecart/${id}`
+        );
+
+        if (res.data.deleteOK) {
+            alert("ลบตะกร้าสินค้าสำเร็จ");
+
+          
+            cart.value = [];
+            cartDtl.value = [];
+        } else {
+            alert(res.data.message || "ลบตะกร้าสินค้าไม่สำเร็จ");
+        }
+
+    } catch (err) {
+        console.error("Delete Cart Error:", err);
+
+        alert(
+            err.response?.data?.message ||
+            "ลบตะกร้าสินค้าไม่สำเร็จ"
+        );
+    }
+};
+
+
+
+
+const confirmOrder = async (id) => {
+    if (!confirm("ยืนยันสั่งสินค้า")) return;
+
+    try {
+        const res = await axios.put(
+            `http://localhost:3000/confirm/${id}`
+        );
+
+        if (res.data.confirmOK) {
+            alert("ยืนยันคำสั่งซื้อสำเร็จ");
+
+            cart.value = cart.value.map(ct =>
+                String(ct.cartId) === String(id)
+                    ? { ...ct, cartCf: true }
+                    : ct
+            );
+        } else {
+            alert(res.data.message || "ยืนยันคำสั่งซื้อไม่สำเร็จ");
+        }
+    } catch (err) {
+        console.error("Confirm Order Error:", err);
+    }
+};
+
 </script>
 
 
