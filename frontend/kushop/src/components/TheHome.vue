@@ -41,13 +41,7 @@
                                     </p>
                                     
                                     <!-- mt-auto: ดันปุ่มดูรายละเอียดให้ลงไปอยู่ชิดขอบล่างสุดเสมอกันทุกกล่อง -->
-                                    <a 
-                                        href="#" 
-                                        class="btn text-white fw-bold w-100 mt-auto" 
-                                        style="background-color: #F97316; border: none;"
-                                    >
-                                        ดูรายละเอียด
-                                    </a>
+                                    
                                 </div>
                             </div>
                         </div>

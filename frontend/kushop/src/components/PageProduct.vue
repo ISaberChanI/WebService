@@ -16,7 +16,12 @@
     <div class="row">
         <div v-for="(pd,pdId) in products" :key="pdId" class="col-lg-4 col-md-6 col-sm-12 mt-3">
             <div class="card shadow-lg" style="width: 18rem; background-color: #1E293B; border: 1px solid #334155;">
-                <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`" class="card-img-top p-2 rounded" :alt="`${pd.pdName}`">
+               <img
+    :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
+    class="card-img-top p-2 rounded"
+    :alt="pd.pdName"
+    style="height: 220px; object-fit: contain;"
+>
                 <div class="card-body">
                     <h5 class="card-title text-white fw-bold">{{ pd.pdName }}</h5>
                     <p class="card-text text-secondary">
