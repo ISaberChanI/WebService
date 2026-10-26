@@ -1,5 +1,8 @@
+นี่คือโค้ด Navbar ที่ปรับแก้เงื่อนไขให้ตรวจสอบ `dutyId` เป็น `'admin'` (แบบตัวอักษร) พร้อมใช้งานเรียบร้อยแล้วครับ:
+
+```vue
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark " style="background-color: #111827">
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #111827">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">Kizuna Hobbies</a>
       <button
@@ -11,25 +14,33 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
-          <li class="nav-item" >
-            <router-link to="/" style="text-decoration-line: none;"><div class="nav-link " >Home</div></router-link>
+          <li class="nav-item">
+            <router-link to="/" style="text-decoration-line: none;"><div class="nav-link">Home</div></router-link>
           </li>
           <li class="nav-item">
             <router-link to="/product" style="text-decoration-line: none;"><div class="nav-link">Product</div></router-link>
           </li>
+
+          <!-- 🌟 แสดงเฉพาะตอนล็อกอิน และ dutyId เป็น admin -->
+          <li class="nav-item" v-if="login && dutyId && dutyId.toLowerCase() === 'admin'">
+            <router-link to="/memberList" style="text-decoration-line: none;">
+              <div class="nav-link" style="font-weight: bold;">MemberList</div>
+            </router-link>
+          </li>
+
           <li class="nav-item" v-if="login">
             <router-link to="/pagemember" style="text-decoration: none">
               <div class="nav-link fw-bold">{{ memName }}</div>
             </router-link>
           </li>
-          <li class="nav-item  pe-3"  v-if="login">
+          <li class="nav-item pe-3" v-if="login">
             <CartInfo />
           </li>
-          <li class="nav-item " v-if="login">
-                        <router-link to="/cartlist" style="text-decoration: none;">
-                            <div class="nav-link fw-bold">Cart</div>
-                        </router-link>
-                    </li>
+          <li class="nav-item" v-if="login">
+            <router-link to="/cartlist" style="text-decoration: none;">
+              <div class="nav-link fw-bold">Cart</div>
+            </router-link>
+          </li>
           <li class="nav-item" v-if="login">
             <a href="#" @click="memLogout()" style="text-decoration: none">
               <div class="nav-link fw-bold">Logout</div>
@@ -40,14 +51,12 @@
               <div class="nav-link">Login</div>
             </router-link>
           </li>
-
-
-          
         </ul>
       </div>
     </div>
   </nav>
 </template>
+
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import axios from "axios";
@@ -64,6 +73,7 @@ const memEmail = ref(null);
 const memName = ref(null);
 const dutyId = ref(null);
 const login = ref(false)
+
 watch(
   () => authStore.isLogin, () => {
     console.log("Watch");
@@ -75,7 +85,6 @@ onMounted(async () => {
   await getMember();
 });
 
-
 const getMember = async () => {
   await axios
     .get(`http://localhost:3000/members/detail`)
@@ -86,7 +95,7 @@ const getMember = async () => {
       dutyId.value = member.value.dutyId;
       login.value = member.value.login
     })
-    .catch((err) => console.log(err.message)); //ถ้าผิดพลาดแสดง err
+    .catch((err) => console.log(err.message));
 };
 
 const memLogout = async () => {
@@ -94,7 +103,7 @@ const memLogout = async () => {
   if (cf) {
     try {
       console.log(authStore.isLogin)
-      const response = await axios.get(`http://localhost:3000/members/logout`);
+      await axios.get(`http://localhost:3000/members/logout`);
       getMember();
       authStore.logout();
       router.push("/");
@@ -103,9 +112,7 @@ const memLogout = async () => {
     }
   }
 };
-
 </script>
-
 
 <style>
 </style>

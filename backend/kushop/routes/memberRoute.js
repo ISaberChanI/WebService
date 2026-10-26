@@ -3,6 +3,7 @@ import * as memberC from "../controllers/memberController.js"
 
 const router  = express.Router()
 
+router.get('/members',memberC.getAllMember)
 router.get('/members/detail',memberC.getMember)
 router.get('/members/logout',memberC.logoutMember)
 router.post('/members',memberC.postMember)
