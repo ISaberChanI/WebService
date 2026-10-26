@@ -1,6 +1,3 @@
-นี่คือโค้ด Navbar ที่ปรับแก้เงื่อนไขให้ตรวจสอบ `dutyId` เป็น `'admin'` (แบบตัวอักษร) พร้อมใช้งานเรียบร้อยแล้วครับ:
-
-```vue
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #111827">
     <div class="container-fluid">
