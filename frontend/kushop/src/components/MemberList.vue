@@ -38,6 +38,13 @@
                             เปลี่ยนสถานะ
                         </button>
 
+                        <button
+    class="btn btn-primary fw-bold w-100"
+    @click="editMemberName(mem)"
+>
+    แก้ไขชื่อ
+</button>
+
                         <!-- ปุ่มดูประวัติการสั่งซื้อ (ลิงก์ไปยังหน้าประวัติการสั่งซื้อโดยแนบอีเมลไป) -->
                         <router-link :to="{ path: '/cartlist', query: { email: mem.memEmail } }" style="text-decoration: none;">
                             <div class="btn btn-secondary fw-bold w-100">ดูประวัติการสั่งซื้อ</div>
@@ -107,6 +114,40 @@
             }
         }
     }
+
+
+    // ฟังก์ชันแก้ไขชื่อสมาชิก
+const editMemberName = async (mem) => {
+    const newName = window.prompt(
+        'กรอกชื่อใหม่',
+        mem.memName
+    )
+
+    // กดยกเลิก หรือไม่ได้กรอกชื่อ
+    if (newName === null || newName.trim() === '') {
+        return
+    }
+
+    try {
+        const res = await axios.put(
+            'http://localhost:3000/members/name',
+            {
+                email: mem.memEmail,
+                name: newName.trim()
+            }
+        )
+
+        if (res.data.ok) {
+            alert('เปลี่ยนชื่อสำเร็จ')
+            await loadMembers()
+        } else {
+            alert('เปลี่ยนชื่อไม่สำเร็จ')
+        }
+    } catch (err) {
+        console.log(err.message)
+        alert('ไม่สามารถเปลี่ยนชื่อได้')
+    }
+}
 </script>
 
 <style lang="scss" scoped>

@@ -267,3 +267,49 @@ export async function changeMemberStatus(req, res) {
         })
     }
 }
+
+
+
+
+export async function updateMemberName(req, res) {
+    try {
+        const { email, name } = req.body;
+
+        if (!email || !name || !name.trim()) {
+            return res.status(400).json({
+                ok: false,
+                message: "กรุณาระบุอีเมลและชื่อใหม่"
+            });
+        }
+
+        const result = await database.query({
+            text: `
+                UPDATE members
+                SET "memName" = $1
+                WHERE "memEmail" = $2
+                RETURNING "memEmail", "memName"
+            `,
+            values: [name.trim(), email]
+        });
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                ok: false,
+                message: "ไม่พบสมาชิกอีเมลนี้"
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            message: "เปลี่ยนชื่อสำเร็จ",
+            member: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error("updateMemberName error:", err);
+        return res.status(500).json({
+            ok: false,
+            message: err.message
+        });
+    }
+}

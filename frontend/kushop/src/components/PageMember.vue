@@ -1,124 +1,295 @@
+
+
 <template>
-    <div class="row ">
-        <div class="col-md-6 col-sm-12 ">
-            <h3 class="mt-5 text-end">{{ memEmail }}</h3>
-            <h5 class="text-end">{{ memName }}</h5>
-        </div>
-        <div class="col-md-6 col-sm-12 ">
-            <div class="card mt-5" style="width: 18rem" v-if="imgOK" >
-                <img :src="`http://localhost:3000/img_mem/${memEmail}.jpg?timestamp=${imageTimestamp}`">
-            </div>
-            <div class="card mt-5" style="width: 18rem" v-else >
-                <img :src="`http://localhost:3000/img_mem/default.jpg`" :alt="memEmail">
-            </div>
+  <div class="row mt-4">
+    <!-- ฝั่งซ้าย: ข้อมูลสมาชิก -->
+    <div class="col-md-6 col-sm-12 text-end">
+      <h3 class="mt-5 text-white">{{ memEmail }}</h3>
+      <h5 class="text-white-50">{{ memName }}</h5>
+    </div>
+
+    <!-- ฝั่งขวา: รูปภาพ + อัปโหลด + แก้ไขชื่อ -->
+    <div class="col-md-6 col-sm-12 d-flex flex-column align-items-center align-items-md-start">
+      
+      <!-- รูปโปรไฟล์ -->
+      <div class="card" style="width: 18rem;">
+        <img
+          v-if="imgOK"
+          :src="`http://localhost:3000/img_mem/${memEmail}.jpg?timestamp=${imageTimestamp}`"
+          :alt="memEmail"
+          class="img-fluid rounded"
+        />
+        <img
+          v-else
+          src="http://localhost:3000/img_mem/default.jpg"
+          :alt="memEmail"
+          class="img-fluid rounded"
+        />
+      </div>
+
+      <!-- ฟอร์ม Upload รูป -->
+      <form @submit.prevent="uploadFile" class="mt-3" style="width: 18rem;">
+        <div class="d-flex gap-2">
+          <input
+            class="form-control"
+            type="file"
+            id="formFile"
+            accept="image/*"
+            @change="onFileChange"
+            required
+          />
+          <button class="btn btn-primary" type="submit">
+            Upload
+          </button>
         </div>
 
-    </div>
-    <form @submit.prevent="uploadFile()">
-    <div class="row g-3 mt-3">
-        <div class="col-md-6 col-sm-12 "></div>
-        <div class="col-auto">
-            <input class="form-control" type="file" id="formFile" @change="onFileChange" required />
+        <!-- Alert แจ้งผลการอัปโหลด -->
+        <div
+          v-if="fileMessage"
+          class="alert mt-2 mb-0"
+          :class="fileMessage === 'Upload ไม่สำเร็จ' ? 'alert-danger' : 'alert-success'"
+        >
+          {{ fileMessage }}
         </div>
-        <div class="col-auto">
-            <button class="btn btn-primary" type="submit">Upload</button>
-        </div>
-    </div>
-    <div class="row g-3 mt-3">
-        <div class="col-md-6 col-sm-12 ">
-        </div>
-        <div class="col-auto">
-        <div class="alert alert-danger" v-if="fileMessage == 'Upload ไม่สำเร็จ' && fileMessage != null">
-            {{ fileMessage }}
-        </div>
-        <div class="alert alert-success" v-if="fileMessage != 'Upload ไม่สำเร็จ' && fileMessage != null">
-            {{ fileMessage }}
-        </div>
-        </div>
-        <div class="col-auto"></div>
-    </div>
-</form>
+      </form>
 
+      <!-- ส่วนแก้ไขชื่อ -->
+      <div class="mt-3" style="width: 18rem;">
+        <!-- ปุ่มแก้ไขชื่อ -->
+        <button
+          v-if="!editingName"
+          class="btn btn-warning w-100"
+          type="button"
+          @click="startEditName"
+        >
+          แก้ไขชื่อ
+        </button>
+
+        <!-- ช่องกรอกชื่อใหม่ -->
+        <form
+          v-if="editingName"
+          @submit.prevent="saveMemberName"
+        >
+          <input
+            type="text"
+            class="form-control mb-2"
+            v-model="newName"
+            placeholder="กรอกชื่อใหม่"
+            required
+            maxlength="100"
+          />
+
+          <div class="d-flex gap-2">
+            <button
+              type="submit"
+              class="btn btn-success flex-fill"
+              :disabled="savingName"
+            >
+              {{ savingName ? 'กำลังบันทึก...' : 'บันทึก' }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary flex-fill"
+              @click="cancelEditName"
+            >
+              ยกเลิก
+            </button>
+          </div>
+        </form>
+
+        <!-- ข้อความแจ้งผลการแก้ชื่อ -->
+        <div
+          v-if="nameMessage"
+          class="alert mt-2 mb-0"
+          :class="nameSuccess ? 'alert-success' : 'alert-danger'"
+        >
+          {{ nameMessage }}
+        </div>
+      </div>
+
+    </div>
+  </div>
 </template>
 
 
-
 <script setup>
-import { onMounted,ref } from 'vue';
-import axios from 'axios';
-axios.defaults.withCredentials =true
-const member=ref(null)
-const memEmail=ref(null)
-const memName=ref(null)
-const dutyId=ref(null)
-const login=ref(false)
-const imgOK=ref(false)
-const fileMessage=ref(null)
-const file=ref(null)
-const imageTimestamp=ref(Date.now())
+import { onMounted, ref } from 'vue'
+import axios from 'axios'
 
-onMounted(async ()=>{
+axios.defaults.withCredentials = true
+
+const member = ref(null)
+const memEmail = ref(null)
+const memName = ref(null)
+const dutyId = ref(null)
+const login = ref(false)
+
+const imgOK = ref(false)
+const fileMessage = ref(null)
+const file = ref(null)
+const imageTimestamp = ref(Date.now())
+
+// ตัวแปรสำหรับแก้ไขชื่อ
+const editingName = ref(false)
+const newName = ref('')
+const savingName = ref(false)
+const nameMessage = ref(null)
+const nameSuccess = ref(false)
+
+onMounted(async () => {
     await getMember()
     await chkImage()
 })
-const getMember=async ()=>{
-    await axios.get(`http://localhost:3000/members/detail`)
-        .then((res)=>{
-            member.value=res.data
-            memEmail.value=member.value.memEmail
-            memName.value=member.value.memName
-            dutyId.value=member.value.dutyId
-           login.value=member.value.login
-        })
-        .catch(err=>console.log(err.message)) //ถ้าผิดพลาดแสดง err
+
+// โหลดข้อมูลสมาชิก
+const getMember = async () => {
+    try {
+        const res = await axios.get(
+            'http://localhost:3000/members/detail'
+        )
+
+        member.value = res.data
+        memEmail.value = res.data.memEmail
+        memName.value = res.data.memName
+        dutyId.value = res.data.dutyId
+        login.value = res.data.login
+    } catch (err) {
+        console.error(err)
+    }
 }
-// อ่านค่าจาก input file เมื่อถูกเรียก
-const onFileChange=async(e)=>{
-    file.value=e.target.files[0]
+
+// เริ่มแก้ไขชื่อ
+const startEditName = () => {
+    newName.value = memName.value || ''
+    nameMessage.value = null
+    editingName.value = true
 }
-// ทำการ Uploadfile เมื่อถูกSubmit ต้องเป็น async เพราะต้องรอให้ load เสร็จ
-const uploadFile=async()=>{
-    if(!file.value){
-        fileMessage.value="เลือก File เพื่อ Upload"
+
+// ยกเลิกการแก้ไข
+const cancelEditName = () => {
+    editingName.value = false
+    newName.value = ''
+    nameMessage.value = null
+}
+
+// บันทึกชื่อใหม่
+const saveMemberName = async () => {
+    const trimmedName = newName.value.trim()
+
+    if (!trimmedName) {
+        nameSuccess.value = false
+        nameMessage.value = 'กรุณากรอกชื่อใหม่'
         return
     }
-    // กำหนดค่า Form เพื่อ POST
+
+    if (!memEmail.value) {
+        nameSuccess.value = false
+        nameMessage.value = 'ไม่พบอีเมลสมาชิก'
+        return
+    }
+
+    savingName.value = true
+    nameMessage.value = null
+
+    try {
+        const res = await axios.put(
+            'http://localhost:3000/members/name',
+            {
+                email: memEmail.value,
+                name: trimmedName
+            }
+        )
+
+        if (res.data.ok) {
+            memName.value = res.data.member?.memName || trimmedName
+
+            // อัปเดตชื่อที่แสดงในหน้าเว็บ
+            if (member.value) {
+                member.value.memName = memName.value
+            }
+
+            nameSuccess.value = true
+            nameMessage.value = 'เปลี่ยนชื่อสำเร็จ'
+            editingName.value = false
+        } else {
+            nameSuccess.value = false
+            nameMessage.value =
+                res.data.message || 'เปลี่ยนชื่อไม่สำเร็จ'
+        }
+    } catch (err) {
+        console.error(err)
+        nameSuccess.value = false
+        nameMessage.value =
+            err.response?.data?.message || 'ไม่สามารถเปลี่ยนชื่อได้'
+    } finally {
+        savingName.value = false
+    }
+}
+
+// อ่านไฟล์รูปภาพ
+const onFileChange = (e) => {
+    file.value = e.target.files?.[0] || null
+}
+
+// Upload รูปภาพ
+const uploadFile = async () => {
+    if (!file.value) {
+        fileMessage.value = 'กรุณาเลือกไฟล์เพื่อ Upload'
+        return
+    }
+
+    if (!memEmail.value) {
+        fileMessage.value = 'ไม่พบอีเมลสมาชิก'
+        return
+    }
+
     const formData = new FormData()
-    formData.append("memEmail",memEmail.value)
-    formData.append("file",file.value)
-    // กำหนด endpoint และกำหนด Header ว่าเป็นการส่ง file
-    // กำหนด Header Message
-    try{
-        const response=await axios.post("http://localhost:3000/members/uploadImg",formData,{
-            headers:{"Content-Type": "multipart/form-data"}
-        })
-        fileMessage.value=response.data.message
-         // ให้ทำการตรวจสอบ image อีกครั้ง
+    formData.append('memEmail', memEmail.value)
+    formData.append('file', file.value)
+
+    try {
+        const response = await axios.post(
+            'http://localhost:3000/members/uploadImg',
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            }
+        )
+
+        fileMessage.value =
+            response.data.message || 'Upload สำเร็จ'
+
         await chkImage()
         imageTimestamp.value = Date.now()
+    } catch (err) {
+        console.error(err)
+        fileMessage.value = 'Upload ไม่สำเร็จ'
     }
-    catch(err) { fileMessage.value="Upload ไม่สำเร็จ"}
 }
 
-const chkImage=async()=>{
-    const image = new Image(); // สร้าง Object Image
-    // กำหนด attribute src ให้ Image เพื่อลองตรวจสอบดูว่ามีรูปนี้หรือเปล่า
-    image.src = `http://localhost:3000/img_mem/${memEmail.value}.jpg`;
+// ตรวจสอบว่ามีรูปสมาชิกหรือไม่
+const chkImage = async () => {
+    if (!memEmail.value) {
+        imgOK.value = false
+        return
+    }
+
+    const image = new Image()
+
     image.onload = () => {
-        // รูปภาพโหลดสำเร็จ
-        imgOK.value = true;
-    };
-    image.onerror = () => {
-        // รูปภาพไม่สามารถโหลดได้
-        imgOK.value = false;
-    };
-}
+        imgOK.value = true
+    }
 
+    image.onerror = () => {
+        imgOK.value = false
+    }
+
+    image.src =
+        `http://localhost:3000/img_mem/${memEmail.value}.jpg?timestamp=${imageTimestamp.value}`
+}
 </script>
 
-
-
 <style scoped>
-
-
 </style>
