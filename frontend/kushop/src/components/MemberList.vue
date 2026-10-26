@@ -52,10 +52,10 @@
 
 <script setup>
     import { onMounted, ref, watch } from 'vue'
-    import { useRoute } from 'vue-router' // 1. Import useRoute เพิ่ม
+    import { useRoute } from 'vue-router'
     import axios from 'axios'
 
-    const route = useRoute() // 2. ประกาศใช้งาน route
+    const route = useRoute()
     const members = ref([])
     const stext = ref("")
 
@@ -71,9 +71,8 @@
         await loadMembers()
     })
 
-    // 🌟 3. เติม watch ตรงนี้ เพื่อดักฟังการเปลี่ยน URL/Path
+    // ดักฟังการเปลี่ยน URL/Path
     watch(() => route.path, async (newPath) => {
-        // ถ้าเปลี่ยนกลับมาหน้า memberlist ให้โหลดข้อมูลใหม่ทันที
         if (newPath === '/memberlist') {
             await loadMembers()
         }
@@ -93,27 +92,21 @@
             .catch(err => console.log(err.message))
     }
 
-    const chkImage=async()=>{
-    const image = new Image(); // สร้าง Object Image
-    // กำหนด attribute src ให้ Image เพื่อลองตรวจสอบดูว่ามีรูปนี้หรือเปล่า
-    image.src = `http://localhost:3000/img_mem/${memEmail.value}.jpg`;
-    image.onload = () => {
-        // รูปภาพโหลดสำเร็จ
-        imgOK.value = true;
-    };
-    image.onerror = () => {
-        // รูปภาพไม่สามารถโหลดได้
-        imgOK.value = false;
-    };
-
-        const searchMember = async ()=>{
-        await axios.get(`http://localhost:3000/members/search/${stext.value}`)
-        .then(res=>{products.value=res.data})
-        .catch(err=>console.log(err.message))
+    // 🌟 ฟังก์ชันเปลี่ยนสถานะ (Admin <-> Member)
+    const changeStatus = async (email) => {
+        const cf = window.confirm(`ต้องการเปลี่ยนสถานะของสมาชิก (${email}) ใช่หรือไม่?`)
+        if (cf) {
+            try {
+                const res = await axios.put(`http://localhost:3000/members/status`, { email: email })
+                if (res.data.ok) {
+                    await loadMembers() // โหลดข้อมูลใหม่เพื่อให้หน้าจออัปเดตสิทธิ์ทันที
+                }
+            } catch (err) {
+                console.log(err.message)
+                alert('ไม่สามารถเปลี่ยนสถานะได้')
+            }
+        }
     }
-
-}
-    
 </script>
 
 <style lang="scss" scoped>
