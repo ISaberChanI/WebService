@@ -1,7 +1,7 @@
 <template>
-    <div v-if="qty>0" >
-        <button  class="btn btn-success text-white" @click="router.push(`/cartshow/${cartId}`)">
-            {{cartId}} [{{ qty }}] - {{ money }}฿
+    <div v-if="qty>0">
+        <button class="btn text-white fw-bold shadow-sm" style="background-color: #F97316; border: none;" @click="router.push(`/cartshow/${cartId}`)">
+            <i class="bi bi-cart-fill"></i> {{cartId}} [{{ qty }}] - {{ money }}฿
         </button>
     </div>
 </template>
