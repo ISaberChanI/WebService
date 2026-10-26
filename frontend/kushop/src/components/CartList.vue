@@ -26,9 +26,10 @@
             <td>{{ formattedDate(ct.cartDate) }}</td>
             <td class="text-center">{{ (ct.sqty??0) }}</td>
             <td class="text-end">{{ (ct.sprice??0).toLocaleString()}}</td>
-            <td class="text-center"><i :class="ct.cartCf ? 'bi bi-check-lg' : 'bi bi-dash'"  @click="confirmOrder(ct.cartId)"></i></td>
-            <td class="text-center">
-                <i class="bi-x-lg text-danger" @click="deleteCart(ct.cartId)"></i>
+            <td class="text-center"><i :class="ct.cartCf ? 'bi bi-check-lg' : 'bi bi-dash'"  ></i></td>
+            <td class="text-center" >
+                
+                <i class="bi-x-lg text-danger" v-if="!ct.cartCf" @click="deleteCart(ct.cartId)"></i>
             </td>
         </tr>
         </tbody>

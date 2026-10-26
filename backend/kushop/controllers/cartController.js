@@ -336,6 +336,16 @@ export async function delCartDtl(req, res) {
     const { cartId, pdId } = req.params;
     
     try {
+        // 💡 แก้ไขตรงนี้: เปลี่ยน "cart" เป็นชื่อตารางหัวข้อตะกร้าจริงใน DB ของคุณ (เช่น "carts" หรือ "Cart")
+        const cartCheck = await database.query({
+            text: `SELECT "cartCf" FROM "carts" WHERE "cartId" = $1`, 
+            values: [cartId]
+        });
+
+        if (cartCheck.rows.length > 0 && cartCheck.rows[0].cartCf) {
+            return res.status(400).json({ message: 'ไม่สามารถลบสินค้าได้ เนื่องจากยืนยันคำสั่งซื้อแล้ว' });
+        }
+
         const result = await database.query({
             text: `DELETE FROM "cartDtl" WHERE "cartId" = $1 AND "pdId" = $2`,
             values: [cartId, pdId]
@@ -349,7 +359,6 @@ export async function delCartDtl(req, res) {
         return res.status(500).json({ message: err.message });
     }
 }
-
 
 
 

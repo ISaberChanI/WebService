@@ -30,6 +30,7 @@
                     <hr />
 
                     <button
+                        v-if="!ct.cartCf"
                         class="btn btn-danger"
                         @click="deleteCart(ct.cartId)"
                         :disabled="busy"
@@ -99,6 +100,7 @@
 
                     <td class="text-center">
                         <button
+                        
                             class="btn btn-sm btn-outline-danger"
                             @click="deleteCartDtl(ctd)"
                             :disabled="busy || isConfirmed"
@@ -235,27 +237,41 @@ const deleteCart = async (id) => {
 
 
 
+
+
 const confirmOrder = async (id) => {
-    if (!confirm("ยืนยันสั่งสินค้า")) return;
+    if (!confirm('ยืนยันคำสั่งซื้อใช่หรือไม่?')) return;
 
     try {
         const res = await axios.put(
             `http://localhost:3000/confirm/${id}`
         );
 
+        // เช็คการตอบกลับจาก Backend (res.data.confirmOK)
         if (res.data.confirmOK) {
-            alert("ยืนยันคำสั่งซื้อสำเร็จ");
+            alert('ยืนยันคำสั่งซื้อสำเร็จ');
 
-            cart.value = cart.value.map(ct =>
-                String(ct.cartId) === String(id)
-                    ? { ...ct, cartCf: true }
-                    : ct
-            );
+            // 2. รีเซ็ตค่าใน Store เพื่อล้างปุ่มตะกร้าข้างบนทันที
+            cartStore.theQty = 0;
+            
+            // (ถ้ามีเก็บ cartId ใน store แนะนำให้รีเซ็ตด้วย)
+            if (cartStore.cartId) {
+                cartStore.cartId = null;
+            }
+
+            // 3. โหลดข้อมูลรายการตะกร้าในหน้าปัจจุบันใหม่ (ถ้ามีฟังก์ชันนี้)
+            if (typeof getCartList === 'function') {
+                await getCartList();
+            }
         } else {
-            alert(res.data.message || "ยืนยันคำสั่งซื้อไม่สำเร็จ");
+            alert(res.data.message || 'ยืนยันคำสั่งซื้อไม่สำเร็จ');
         }
     } catch (err) {
-        console.error("Confirm Order Error:", err);
+        console.error('Confirm Order Error:', err);
+        alert(
+            err.response?.data?.message ||
+            'เกิดข้อผิดพลาดในการยืนยันคำสั่งซื้อ'
+        );
     }
 };
 
