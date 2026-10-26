@@ -13,6 +13,18 @@
                         จำนวนสินค้า <span class="fw-bold text-white">{{ ct.sqty }}</span> ชิ้น, 
                         ยอดเงิน <span class="fw-bold" style="color: #F97316;">{{ (ct.sprice??0).toLocaleString() }} บาท</span>
                     </div>
+<<<<<<< HEAD
+                    <hr />
+                  <button class="btn btn-danger"
+        @click="deleteCart(ct.cartId)">
+    <i class="bi-cart-x-fill"></i> ลบตะกร้าสินค้า
+</button>
+
+<button class="btn btn-primary float-end"
+        @click="confirmOrder(ct.cartId)">
+    <i class="bi-currency-dollar"></i> ยืนยันสั่งสินค้า
+</button>
+=======
                     <hr style="border-color: #334155;" />
                     <!-- ปุ่มลบตะกร้า -->
                     <a class="btn btn-outline-danger fw-bold" onclick="return confirm('ยืนยันลบตะกร้า')">
@@ -21,6 +33,7 @@
                     <a class="btn text-white fw-bold float-end" style="background-color: #F97316; border: none;" onclick="return confirm('ยืนยันสั่งสินค้า')">
                         <i class="bi-currency-dollar"></i> ยืนยันสั่งสินค้า
                     </a>
+>>>>>>> d792dcd303e78961fe9b69ab0d68c3b21c39c308
                 </div>
             </div> <!--card-->
         </div> <!---v for  -->
@@ -119,6 +132,68 @@ const getMember=async ()=>{
         })
         .catch(err=>console.log(err.message))
 }
+
+
+
+const deleteCart = async (id) => {
+    if (!confirm("ยืนยันลบตะกร้าสินค้าใช่หรือไม่?")) {
+        return;
+    }
+
+    try {
+        console.log("Delete Cart:", id);
+
+        const res = await axios.delete(
+            `http://localhost:3000/deletecart/${id}`
+        );
+
+        if (res.data.deleteOK) {
+            alert("ลบตะกร้าสินค้าสำเร็จ");
+
+          
+            cart.value = [];
+            cartDtl.value = [];
+        } else {
+            alert(res.data.message || "ลบตะกร้าสินค้าไม่สำเร็จ");
+        }
+
+    } catch (err) {
+        console.error("Delete Cart Error:", err);
+
+        alert(
+            err.response?.data?.message ||
+            "ลบตะกร้าสินค้าไม่สำเร็จ"
+        );
+    }
+};
+
+
+
+
+const confirmOrder = async (id) => {
+    if (!confirm("ยืนยันสั่งสินค้า")) return;
+
+    try {
+        const res = await axios.put(
+            `http://localhost:3000/confirm/${id}`
+        );
+
+        if (res.data.confirmOK) {
+            alert("ยืนยันคำสั่งซื้อสำเร็จ");
+
+            cart.value = cart.value.map(ct =>
+                String(ct.cartId) === String(id)
+                    ? { ...ct, cartCf: true }
+                    : ct
+            );
+        } else {
+            alert(res.data.message || "ยืนยันคำสั่งซื้อไม่สำเร็จ");
+        }
+    } catch (err) {
+        console.error("Confirm Order Error:", err);
+    }
+};
+
 
 
 const deleteCartDtl = async (ctd) => {

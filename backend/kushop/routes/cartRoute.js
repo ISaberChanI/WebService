@@ -14,4 +14,12 @@ router.get('/carts/getcartdtl/:id',cartC.getCartDtl)
 router.post('/carts/getcartbycus',cartC.getCartByCus)
 router.delete('/carts/:cartId/:pdId', cartC.delCartDtl)
 
+//ลบตระกร้าทั้งใบ
+router.delete("/deletecart/:id", cartC.deleteCart)
+
+//ลบตระกร้าที่เราเลือก
+router.delete("/deletecartdtl/:cartId/:pdId", cartC.deleteCartDtl);
+//ยืนยันสินค้าของเเท็ค
+router.put("/confirm/:id", cartC.confirmOrder);
+
 export default router
