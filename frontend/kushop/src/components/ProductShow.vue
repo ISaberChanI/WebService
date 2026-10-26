@@ -3,10 +3,17 @@
         <div v-for="(pd, pdId) in products" :key="pdId" class="mt-5">
             <div class="row ">
                 <div class="col-md-6 col-sm-12 ">
-                    <div class="card mx-auto mb-3" style="width: 18rem; background-color: #1E293B; border: 1px solid #334155;">
-                        <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`" alt=""
-                            class="rounded shadow-sm" >
-                    </div>
+                   <div
+    class="card mx-auto mb-3"
+    style="width: 18rem; height: 280px; background-color: #1E293B; border: 1px solid #334155;"
+>
+    <img
+        :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
+        alt=""
+        class="rounded shadow-sm"
+        style="width: 100%; height: 100%; object-fit: contain; padding: 10px;"
+    >
+</div>
                 </div>
                 <div class="col-md-6 col-sm-12 ">
                     <table class="table table-dark table-borderless" style="background-color: transparent;">
