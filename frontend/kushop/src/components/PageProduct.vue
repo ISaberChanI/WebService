@@ -2,7 +2,7 @@
     <!-- vue.js form ถ้าไม่กำหนด @submit.prevent จะทำการเปลี่ยนหน้าเมือ submit -->
     <form @submit.prevent="searchProduct()">
         <div class="row">
-            <div class="h1 col-md-6 col-sm-12text-danger">ผลิตภันฑ์ของเรา</div>
+            <div class="h1 col-md-6 col-sm-12text-danger">ผลิตภัณฑ์ของเรา</div>
             <div class="col-md-4 col-sm-6">
                 <input type="text" class="form-control" v-model="stext" >
             </div>

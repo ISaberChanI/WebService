@@ -1,6 +1,6 @@
 <template>
     <div class="container mt-5">
-        <h1>ยินดีต้อนรับสู่ร้านค้าเกษตรศาสตร์ศรีราชา</h1>
+        <h1>ยินดีต้อนรับสู่ร้าน Kizuna Hobbies</h1>
         <div class="row">
             
             <div v-for="(pd,pdId) in products" :key="pdId" class="col-lg-4 col-md-6 col-sm-12 mt-2">

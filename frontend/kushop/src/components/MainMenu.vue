@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg " style="background-color:azure">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Kushop</a>
+      <a class="navbar-brand" href="#">Kizuna Hobbies</a>
       <button
         class="navbar-toggler" type="button" data-bs-toggle="collapse"
         data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
