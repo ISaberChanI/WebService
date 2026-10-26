@@ -38,104 +38,113 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import axios from 'axios';
+    import { onMounted, ref } from 'vue';
+    import { useRoute } from 'vue-router'; // 1. Import useRoute เพิ่ม
+    import axios from 'axios';
 
-axios.defaults.withCredentials = true;
+    axios.defaults.withCredentials = true;
 
-const cart = ref([]);
-const memEmail = ref(null);
+    const route = useRoute(); // 2. ประกาศตัวแปร route
+    const cart = ref([]);
+    const memEmail = ref(null);
 
-const formattedDate = (dateStr) => {
-    if (!dateStr) return '';
+    const formattedDate = (dateStr) => {
+        if (!dateStr) return '';
 
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
 
-    return `${year}-${month}-${day}`;
-};
+        return `${year}-${month}-${day}`;
+    };
 
-onMounted(async () => {
-    await getMember();
-    await getCartList();
-});
-
-const getCartList = async () => {
-    try {
-        const customer = { id: memEmail.value };
-
-        const res = await axios.post(
-            'http://localhost:3000/carts/getcartbycus',
-            customer
-        );
-
-        cart.value = Array.isArray(res.data) ? res.data : [];
-    } catch (err) {
-        console.error('Get Cart List Error:', err);
-    }
-};
-
-const getMember = async () => {
-    try {
-        const res = await axios.get(
-            'http://localhost:3000/members/detail'
-        );
-
-        memEmail.value = res.data.memEmail;
-    } catch (err) {
-        console.error('Get Member Error:', err);
-    }
-};
-
-// ยืนยันคำสั่งซื้อ
-const confirmOrder = async (id) => {
-    if (!confirm('ยืนยันคำสั่งซื้อใช่หรือไม่?')) return;
-
-    try {
-        const res = await axios.put(
-            `http://localhost:3000/confirm/${id}`
-        );
-
-        if (res.data.confirmOK) {
-            alert('ยืนยันคำสั่งซื้อสำเร็จ');
-            await getCartList();
+    onMounted(async () => {
+        // 3. ตรวจสอบว่ามี email ส่งมาทาง query หรือไม่ (กรณี Admin กดดูของสมาชิกคนอื่น)
+        if (route.query.email) {
+            memEmail.value = route.query.email;
         } else {
-            alert(res.data.message || 'ยืนยันคำสั่งซื้อไม่สำเร็จ');
+            // ถ้าไม่มี ให้โหลดข้อมูลสมาชิกจาก session ตัวเองปกติ
+            await getMember();
         }
-    } catch (err) {
-        console.error('Confirm Order Error:', err);
-        alert(
-            err.response?.data?.message ||
-            'ยืนยันคำสั่งซื้อไม่สำเร็จ'
-        );
-    }
-};
+        
+        await getCartList();
+    });
 
-// ลบตะกร้าทั้งใบ
-const deleteCart = async (id) => {
-    if (!confirm('ต้องการลบตะกร้าสินค้านี้ใช่หรือไม่?')) return;
+    const getCartList = async () => {
+        try {
+            const customer = { id: memEmail.value };
 
-    try {
-        const res = await axios.delete(
-            `http://localhost:3000/deletecart/${id}`
-        );
+            const res = await axios.post(
+                'http://localhost:3000/carts/getcartbycus',
+                customer
+            );
 
-        if (res.data.deleteOK) {
-            alert('ลบตะกร้าสำเร็จ');
-            await getCartList();
-        } else {
-            alert(res.data.message || 'ลบตะกร้าไม่สำเร็จ');
+            cart.value = Array.isArray(res.data) ? res.data : [];
+        } catch (err) {
+            console.error('Get Cart List Error:', err);
         }
-    } catch (err) {
-        console.error('Delete Cart Error:', err);
-        alert(
-            err.response?.data?.message ||
-            'ลบตะกร้าไม่สำเร็จ'
-        );
-    }
-};
+    };
+
+    const getMember = async () => {
+        try {
+            const res = await axios.get(
+                'http://localhost:3000/members/detail'
+            );
+
+            memEmail.value = res.data.memEmail;
+        } catch (err) {
+            console.error('Get Member Error:', err);
+        }
+    };
+
+    // ยืนยันคำสั่งซื้อ
+    const confirmOrder = async (id) => {
+        if (!confirm('ยืนยันคำสั่งซื้อใช่หรือไม่?')) return;
+
+        try {
+            const res = await axios.put(
+                `http://localhost:3000/confirm/${id}`
+            );
+
+            if (res.data.confirmOK) {
+                alert('ยืนยันคำสั่งซื้อสำเร็จ');
+                await getCartList();
+            } else {
+                alert(res.data.message || 'ยืนยันคำสั่งซื้อไม่สำเร็จ');
+            }
+        } catch (err) {
+            console.error('Confirm Order Error:', err);
+            alert(
+                err.response?.data?.message ||
+                'ยืนยันคำสั่งซื้อไม่สำเร็จ'
+            );
+        }
+    };
+
+    // ลบตะกร้าทั้งใบ
+    const deleteCart = async (id) => {
+        if (!confirm('ต้องการลบตะกร้าสินค้านี้ใช่หรือไม่?')) return;
+
+        try {
+            const res = await axios.delete(
+                `http://localhost:3000/deletecart/${id}`
+            );
+
+            if (res.data.deleteOK) {
+                alert('ลบตะกร้าสำเร็จ');
+                await getCartList();
+            } else {
+                alert(res.data.message || 'ลบตะกร้าไม่สำเร็จ');
+            }
+        } catch (err) {
+            console.error('Delete Cart Error:', err);
+            alert(
+                err.response?.data?.message ||
+                'ลบตะกร้าไม่สำเร็จ'
+            );
+        }
+    };
 </script>
 
 <style lang="scss" scoped>

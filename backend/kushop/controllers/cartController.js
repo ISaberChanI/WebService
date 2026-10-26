@@ -393,5 +393,33 @@ export async function delCartDtl(req, res) {
     }
 }
 
+export async function getCartByAdmin(req, res) {
+    console.log(`GET Cart By Admin is Requested for id/email: ${req.body.id}`)
+    
+    try {
+        const result = await database.query({
+            text: ` 
+                SELECT ROW_NUMBER() OVER (ORDER BY ct."cartId" DESC) AS row_number,
+                       ct.*, 
+                       SUM(ctd.qty) AS sqty, 
+                       SUM(ctd.price * ctd.qty) AS sprice
+                FROM carts ct 
+                LEFT JOIN "cartDtl" ctd ON ct."cartId" = ctd."cartId"
+                WHERE ct."cusId" = $1  -- หรือเปลี่ยนเป็น ct."memEmail" ตามโครงสร้างตาราง carts ของคุณ
+                GROUP BY ct."cartId"
+                ORDER BY ct."cartId" DESC
+            `,
+            values: [req.body.id]
+        })
+        
+        return res.status(200).json(result.rows)
+    }
+    catch (err) {
+        console.error('Get Cart By Cus Error:', err.message)
+        return res.status(500).json({
+            error: err.message
+        })
+    }
+}
 
 

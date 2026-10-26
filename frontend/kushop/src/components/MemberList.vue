@@ -39,7 +39,7 @@
                         </button>
 
                         <!-- ปุ่มดูประวัติการสั่งซื้อ (ลิงก์ไปยังหน้าประวัติการสั่งซื้อโดยแนบอีเมลไป) -->
-                        <router-link :to="{ path: '/members/orders', query: { email: mem.memEmail } }" style="text-decoration: none;">
+                        <router-link :to="{ path: '/cartlist', query: { email: mem.memEmail } }" style="text-decoration: none;">
                             <div class="btn btn-secondary fw-bold w-100">ดูประวัติการสั่งซื้อ</div>
                         </router-link>
                     </div>
