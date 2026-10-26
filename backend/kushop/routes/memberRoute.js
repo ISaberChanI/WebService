@@ -10,6 +10,9 @@ router.get('/members/logout',memberC.logoutMember)
 router.post('/members',memberC.postMember)
 router.post('/members/login',memberC.loginMember)
 router.post('/members/uploadimg',memberC.uploadMember)
-router.put('/members/:id',memberC.changeMemberStatus);
+
+router.put('/members/status', memberC.changeMemberStatus);
+
 router.put("/members/name", memberC.updateMemberName);
+
 export default router

@@ -41,71 +41,121 @@ export async function uploadMember(req, res) {
     });
 }
 
-export async function getMember(req,res) {
-    console.log(`GET /getMember is requested.`)
-    const token = req.cookies.token
-    if (!token)
-        return res.json({ message: `No member`, login:false})
+
+export async function getMember(req, res) {
+    console.log('GET /members/detail is requested.')
+
     try {
-        const secret_key = process.env.SECRET_KEY
-        const member = jwt.verify(token,secret_key)
-        console.log(member)
-        return res.json({
+        const token = req.cookies?.token
+
+        if (!token) {
+            return res.status(401).json({
+                message: 'กรุณาเข้าสู่ระบบ',
+                login: false
+            })
+        }
+
+        // ตรวจสอบ Token ก่อน
+        const decoded = jwt.verify(
+            token,
+            process.env.SECRET_KEY
+        )
+
+        // ดึงชื่อและสถานะล่าสุดจาก Database
+        const result = await database.query({
+            text: `
+                SELECT "memEmail", "memName", "dutyId"
+                FROM members
+                WHERE "memEmail" = $1
+            `,
+            values: [decoded.memEmail]
+        })
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                message: 'ไม่พบข้อมูลสมาชิก',
+                login: false
+            })
+        }
+
+        const member = result.rows[0]
+
+        console.log('ข้อมูลสมาชิกปัจจุบัน:', member)
+
+        return res.status(200).json({
             memEmail: member.memEmail,
             memName: member.memName,
             dutyId: member.dutyId,
-            login:true
+            login: true
         })
-    }
-    catch (err) {
-        console.log(err.message)
-        return res.json({ message: `The information was falsified.`,login:false})
+    } catch (err) {
+        console.error('getMember error:', err.message)
+
+        return res.status(401).json({
+            message: 'Session หมดอายุหรือไม่ถูกต้อง',
+            login: false
+        })
     }
 }
 
+
+
 export async function postMember(req, res) {
-    console.log(`POST /members is requested`)
-    const bodyData = req.body
+    console.log("POST /members is requested");
+
+    const bodyData = req.body;
+
     try {
-        if (!bodyData.memEmail || !bodyData.memName) {
-            return res.json({ message: `Error memEmail and memName is required`,regist:false }
-            )
+        if (!bodyData.memEmail || !bodyData.memName || !bodyData.password) {
+            return res.status(400).json({
+                message: "กรุณากรอกอีเมล ชื่อ และรหัสผ่าน",
+                regist: false
+            });
         }
 
         const chkRow = await database.query({
-            text: `SELECT * FROM members WHERE "memEmail" = $1 `,
-            values: [req.body.memEmail]
-        })
-        if (chkRow.rowCount != 0) {
-            return res.json({ message: `Error email ${req.body.memEmail} is Exists`,regist:false }
-            )
+            text: `SELECT * FROM members WHERE "memEmail" = $1`,
+            values: [bodyData.memEmail]
+        });
+
+        if (chkRow.rowCount !== 0) {
+            return res.status(409).json({
+                message: `อีเมล ${bodyData.memEmail} มีอยู่แล้ว`,
+                regist: false
+            });
         }
 
+        const pwdHash = await bcrypt.hash(bodyData.password, 11);
 
-        const pwd = req.body.password
-        const saltround = 11
-        const pwdHash = await bcrypt.hash(pwd,saltround)
-        const result = await database.query({
-            text: `  INSERT INTO "members" ("memEmail","memName","memHash")
-                        VALUES ($1,$2,$3) `,
+        await database.query({
+            text: `
+                INSERT INTO members
+                    ("memEmail", "memName", "memHash", "dutyId")
+                VALUES ($1, $2, $3, $4)
+            `,
             values: [
-                req.body.memEmail,
-                req.body.memName,
-                //req.body.memHash
-                pwdHash
+                bodyData.memEmail,
+                bodyData.memName,
+                pwdHash,
+                "member"
             ]
-        })
-        //const datetime = new Date()
-        bodyData.createDate = new Date()
-        bodyData.message = "Regist Success"
-        bodyData.regist= true
-        res.json(bodyData)
-    }
-    catch (err) {
-        return res.json({ message: err.message,regist:false })
-    }
+        });
 
+        return res.status(201).json({
+            message: "Regist Success",
+            regist: true
+        });
+
+    } catch (err) {
+        console.error("postMember error:", err);
+
+        return res.status(500).json({
+            message: err.message,
+            regist: false
+        });
+    }
 }
+
 
 export async function loginMember(req, res) {
     console.log(`POST /Loginmembers is requested`)
@@ -229,38 +279,66 @@ export async function getSearchMember(req, res) {
     }
 }
 
-export async function changeMemberStatus(req, res) {
-    const { email } = req.body;
-    console.log(`PUT /members/status for email: ${email} is requested.`);
-    
-    try {
-        // 1. ตรวจสอบ dutyId ปัจจุบันของสมาชิกคนนี้
-        const checkResult = await database.query({
-            text: 'SELECT "dutyId" FROM members WHERE "memEmail" = $1',
-            values: [email]
-        });
 
-        if (checkResult.rows.length === 0) {
-            return res.status(404).json({ ok: false, message: 'ไม่พบข้อมูลสมาชิก' });
+export async function changeMemberStatus(req, res) {
+    const { email } = req.body
+
+    console.log(`PUT /members/status for email: ${email}`)
+
+    try {
+        if (!email) {
+            return res.status(400).json({
+                ok: false,
+                message: 'กรุณาระบุอีเมลสมาชิก'
+            })
         }
 
-        const currentDuty = checkResult.rows[0].dutyId;
-        // สลับสถานะ: ถ้าเป็น admin ให้เปลี่ยนเป็น member ถ้าไม่ใช่ให้เป็น admin
-        const newDuty = currentDuty && currentDuty.toLowerCase() === 'admin' ? 'member' : 'admin';
+        // ตรวจสอบสถานะปัจจุบัน
+        const checkResult = await database.query({
+            text: `
+                SELECT "memEmail", "dutyId"
+                FROM members
+                WHERE "memEmail" = $1
+            `,
+            values: [email]
+        })
 
-        // 2. อัปเดต dutyId ใหม่ลง Database
-        await database.query({
-            text: 'UPDATE members SET "dutyId" = $1 WHERE "memEmail" = $2',
+        if (checkResult.rowCount === 0) {
+            return res.status(404).json({
+                ok: false,
+                message: 'ไม่พบข้อมูลสมาชิก'
+            })
+        }
+
+        const currentDuty = checkResult.rows[0].dutyId
+
+        const newDuty =
+            currentDuty?.toLowerCase() === 'admin'
+                ? 'member'
+                : 'admin'
+
+        // อัปเดตและอ่านค่าที่บันทึกได้กลับมา
+        const updateResult = await database.query({
+            text: `
+                UPDATE members
+                SET "dutyId" = $1
+                WHERE "memEmail" = $2
+                RETURNING "memEmail", "dutyId"
+            `,
             values: [newDuty, email]
-        });
+        })
 
-        return res.status(200).json({ 
-            ok: true, 
-            message: 'เปลี่ยนสถานะสำเร็จ', 
-            newDuty: newDuty 
-        });
-    }
-    catch (err) {
+        console.log('สถานะใหม่:', updateResult.rows[0])
+
+        return res.status(200).json({
+            ok: true,
+            message: 'เปลี่ยนสถานะสำเร็จ',
+            member: updateResult.rows[0],
+            newDuty: updateResult.rows[0].dutyId
+        })
+    } catch (err) {
+        console.error('changeMemberStatus error:', err)
+
         return res.status(500).json({
             ok: false,
             message: err.message
@@ -271,15 +349,17 @@ export async function changeMemberStatus(req, res) {
 
 
 
+
+
 export async function updateMemberName(req, res) {
     try {
-        const { email, name } = req.body;
+        const { email, name } = req.body
 
-        if (!email || !name || !name.trim()) {
+        if (!email || !name?.trim()) {
             return res.status(400).json({
                 ok: false,
-                message: "กรุณาระบุอีเมลและชื่อใหม่"
-            });
+                message: 'กรุณาระบุอีเมลและชื่อใหม่'
+            })
         }
 
         const result = await database.query({
@@ -290,26 +370,26 @@ export async function updateMemberName(req, res) {
                 RETURNING "memEmail", "memName"
             `,
             values: [name.trim(), email]
-        });
+        })
 
         if (result.rowCount === 0) {
             return res.status(404).json({
                 ok: false,
-                message: "ไม่พบสมาชิกอีเมลนี้"
-            });
+                message: 'ไม่พบสมาชิก'
+            })
         }
 
         return res.status(200).json({
             ok: true,
-            message: "เปลี่ยนชื่อสำเร็จ",
+            message: 'เปลี่ยนชื่อสำเร็จ',
             member: result.rows[0]
-        });
-
+        })
     } catch (err) {
-        console.error("updateMemberName error:", err);
+        console.error('updateMemberName error:', err)
+
         return res.status(500).json({
             ok: false,
-            message: err.message
-        });
+            message: 'บันทึกชื่อไม่สำเร็จ'
+        })
     }
 }
