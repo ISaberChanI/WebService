@@ -7,12 +7,12 @@
     class="card mx-auto mb-3"
     style="width: 18rem; height: 280px; background-color: #1E293B; border: 1px solid #334155;"
 >
-    <img
-        :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
-        alt=""
-        class="rounded shadow-sm"
-        style="width: 100%; height: 100%; object-fit: contain; padding: 10px;"
-    >
+        <img
+            :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
+            :alt="pd.pdName"
+            class="rounded shadow-sm"
+            style="width: 100%; height: 100%; object-fit: contain; padding: 10px;"
+        >
 </div>
                 </div>
                 <div class="col-md-6 col-sm-12 ">
@@ -36,14 +36,8 @@
                     <button class="btn btn-primary" @click="chkLogin()">
                         <i class="bi bi-cart lead"></i> ใส่ตะกร้า&nbsp;
                     </button>
-                   <button
-    v-if="authStore.isAdmin"
-    class="btn btn-warning float-end"
-    @click="editProduct(pd.pdId)"
->
-    <i class="bi bi-pencil-fill lead"></i>
-    แก้ไข
-</button>
+                    <button v-if="authStore.isAdmin" class="btn btn-warning float-end"><i class="bi bi-pencil-fill lead"></i>
+                        แก้ไข&nbsp;&nbsp;</button>
                 </div>
             </div>
         </div>
@@ -53,7 +47,7 @@
 
 <script setup>
     import { onMounted, ref } from 'vue'; // import function ref มาจาก vue
-    import { useRoute,useRouter } from 'vue-router' //useRoute มีไว้เพื่อ อ่าน ข้อมูล useRouter มีไว้เพื่อ สั่งการ ให้เปลี่ยนComponent
+    import { useRoute } from 'vue-router' //useRoute มีไว้เพื่อ อ่าน ข้อมูล useRouter มีไว้เพื่อ สั่งการ ให้เปลี่ยนComponent
     import { useCartStore } from '@/stores/cartStore';
     import axios from 'axios';
     import { useAuthStore } from '@/stores/authStore';
@@ -69,30 +63,7 @@
     const cartId=ref(null)
     const backendMessage=ref(null)
 
-const router = useRouter()
 
-<<<<<<< HEAD
-    // ฟังก์ชันดึงสินค้าตาม Brand ID
-    const getProductsByBrand = async (brandId) => {
-        try {
-            // ⚠️ ต้องมี s ที่ /products/brands/
-            const res = await axios.get(`http://localhost:3000/products/brands/${brandId}`);
-            products.value = res.data;
-            console.log("รายการสินค้าตามแบรนด์:", products.value);
-        } catch (err) {
-            console.error("เกิดข้อผิดพลาด:", err.message);
-        }
-    };
-
-
-=======
-const editProduct = (pdId) => {
-    router.push({
-        name: 'ProductEdit',
-        params: { pdId: pdId }
-    })
-}
->>>>>>> 37d7a53672eb39d97d3143427a2bdaf3f4b7ecad
     // เริ่มทำงานเมื่อเกิดการ mount Component
     onMounted(async ()=>{
         id.value= route.params.pdId

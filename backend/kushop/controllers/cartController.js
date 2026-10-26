@@ -124,66 +124,46 @@ export async function sumCart(req, res) {
     const { id } = req.params;
     console.log(`GET SumCart ${id} is requested`);
 
-    // 1. ดักจับกรณี id เป็น undefined หรือไม่ได้ส่งค่ามา ให้คืนค่า 0 ทันที ไม่ต้อง Query DB
-    if (!id || id === 'undefined') {
-        return res.json({ id: null, qty: 0, money: 0 });
-    }
-
     try {
-        // 2. ใช้ COALESCE ป้องกัน SQL คืนค่า null กรณีตะกร้าว่าง
-        const result = await database.query({
-            text: `SELECT 
-                    COALESCE(SUM(qty), 0) AS qty,
-                    COALESCE(SUM(qty * price), 0) AS money
-                   FROM "cartDtl" ctd
-                   WHERE ctd."cartId" = $1`,
-            values: [id]
-        });
-
-        return res.json({
-            id: id,
-            qty: Number(result.rows[0].qty),
-            money: Number(result.rows[0].money)
-        });
-    } catch (err) {
-        console.error(err.message);
-        return res.status(500).json({ message: err.message, qty: 0, money: 0 });
-    }
-}
-    console.log(`GET SumCart ${req.params.id} is requested`)
-
-    try {
-        if (!req.params.id || req.params.id === "undefined") {
+        // 1. ดักจับกรณี id ไม่ถูกส่งมา หรือเป็น 'undefined'
+        if (!id || id === "undefined") {
             return res.status(400).json({
                 error: true,
-                message: "cartId is required"
-            })
+                message: "cartId is required",
+                qty: 0,
+                money: 0
+            });
         }
 
+        // 2. Query ดึงยอดรวมด้วย COALESCE ป้องกัน null
         const result = await database.query({
             text: `
-                SELECT
+                SELECT 
                     COALESCE(SUM(qty), 0) AS qty,
                     COALESCE(SUM(qty * price), 0) AS money
                 FROM "cartDtl"
                 WHERE "cartId" = $1
             `,
-            values: [req.params.id]
-        })
+            values: [id]
+        });
 
-        console.log(result.rows[0])
+        console.log(result.rows[0]);
 
+        // 3. แปลงค่าเป็น Number ก่อนส่งกลับ
         return res.json({
-            id: req.params.id,
-            qty: result.rows[0].qty,
-            money: result.rows[0].money
-        })
+            id: id,
+            qty: Number(result.rows[0].qty),
+            money: Number(result.rows[0].money)
+        });
+
     } catch (err) {
-        console.error("sumCart error:", err)
+        console.error("sumCart error:", err.message);
         return res.status(500).json({
             error: true,
-            message: err.message
-        })
+            message: err.message,
+            qty: 0,
+            money: 0
+        });
     }
 }
 

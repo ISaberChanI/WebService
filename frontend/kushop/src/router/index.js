@@ -1,76 +1,74 @@
-import { createRouter,createWebHistory } from "vue-router"
-import TheProduct from "@/components/TheProduct.vue"
-// import TheProduct from "./components/TheProduct.vue"
-import TheLogin from "@/components/TheLogin.vue"
+import { createRouter, createWebHistory } from "vue-router"
 import TheHome from "@/components/TheHome.vue"
+import TheProduct from "@/components/TheProduct.vue"
+import TheLogin from "@/components/TheLogin.vue"
 import TheRegister from "@/components/TheRegister.vue"
 import PageMember from "@/components/PageMember.vue"
-import ProductShow from "../components/ProductShow.vue"
+import ProductShow from "@/components/ProductShow.vue"
 import CartShow from "@/components/CartShow.vue"
-import CartList from "../components/CartList.vue"
+import CartList from "@/components/CartList.vue"
 import MemberList from "@/components/Memberlist.vue"
+
+// ✅ เพิ่ม Import สำหรับการ จัดการสินค้า (Admin)
+import ProductAdd from "@/components/ProductAdd.vue"
+import ProductEdit from "@/components/ProductEdit.vue"
+
 const routes = [
     {
-        path:'/',
-        name:'home',
-        component:TheHome
+        path: '/',
+        name: 'home',
+        component: TheHome
     },
     {
-        path:'/product',
-        name:'product',
-        component:TheProduct
+        path: '/product',
+        name: 'product',
+        component: TheProduct
     },
     {
-        path:'/login',
-        name:'Login',
-        component:TheLogin
+        path: '/login',
+        name: 'Login',
+        component: TheLogin
     },
     {
-        path:'/register',
-        name:'Register',
-        component:TheRegister
+        path: '/register',
+        name: 'Register',
+        component: TheRegister
     },
     {
-        path:'/pagemember',
-        name:'Pagemember',
-        component:PageMember
+        path: '/pagemember',
+        name: 'Pagemember',
+        component: PageMember
     },
     {
-        path:'/ProductShow/:pdId',
-        name:'ProductShow',
-        component:ProductShow
+        path: '/ProductShow/:pdId',
+        name: 'ProductShow',
+        component: ProductShow
     },
     {
-        // กำหนดว่า route นี้รับ parameter ต้องระบุให้ตรงกันด้วย
-        path:'/cartShow/:cartId',
-        name:'CartShow',
-        component:CartShow
+        path: '/cartShow/:cartId',
+        name: 'CartShow',
+        component: CartShow
     },
     {
-        path:'/cartList/',
-        name:'CartList',
-        component:CartList
+        path: '/cartList',
+        name: 'CartList',
+        component: CartList
     },
     {
         path: '/product/add',
         name: 'ProductAdd',
         component: ProductAdd
-  },
+    },
     {
-        path: '/product/add',
-        name: 'ProductAdd',
-        component: ProductAdd
-  },
-    {
-    path: '/productedit/:pdId',
-    name: 'ProductEdit',
-    component: ProductEdit
-},
-   
-
-
+        path: '/productedit/:pdId',
+        name: 'ProductEdit',
+        component: ProductEdit
+    }
 ]
+
 const router = createRouter({
-    history:createWebHistory(import.meta.env.BASE_URL),routes
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes
 })
+
 export default router
