@@ -1,18 +1,19 @@
 <template>
-    <!-- Master --><!-- ถ้าค่าที่อยู่ใน Cookie กับ CusId ไม่ตรงกันแสดงว่าไม่ใช้ผู้ซื้อไม่มีสิทธิอ่าน -->
-    <!-- memEmail: {{ memEmail }} ,cusId:{{ cusId }} -->
-    <div v-if="memEmail==cusId">
-    <!-- <div v-if="true"> -->
-        <div v-for="(ct, cartId) in cart" :key="cartId" class="mt-5">
-            <div class="card bg-light">
+    <!-- Master -->
+    <!-- ถ้าค่าที่อยู่ใน Cookie กับ CusId ไม่ตรงกันแสดงว่าไม่ใช้ผู้ซื้อไม่มีสิทธิอ่าน -->
+    <div v-if="memEmail==cusId" class="container mt-4">
+        <div v-for="(ct, cartId) in cart" :key="cartId" class="mt-4">
+            <div class="card shadow-lg text-white" style="background-color: #1E293B; border: 1px solid #334155;">
                 <div class="card-body">
-                    <h4 class="card-title text-primary opacity-75">คำสั่งซื้อเลขที่ {{ ct.cartId }}</h4>
-                    <h5 class="card-subtitle mt-2 text-muted">
+                    <h4 class="card-title fw-bold" style="color: #F97316;">คำสั่งซื้อเลขที่ {{ ct.cartId }}</h4>
+                    <h5 class="card-subtitle mt-2 text-secondary">
                         สั่งซื้อวันที่ {{ formattedDate(ct.cartDate) }}
                     </h5>
-                    <div class="text-danger text-end">
-                        จำนวนสินค้า {{ ct.sqty }}ชิ้น, ยอดเงิน {{ (ct.sprice??0).toLocaleString() }} บาท
+                    <div class="text-end text-light mt-2">
+                        จำนวนสินค้า <span class="fw-bold text-white">{{ ct.sqty }}</span> ชิ้น, 
+                        ยอดเงิน <span class="fw-bold" style="color: #F97316;">{{ (ct.sprice??0).toLocaleString() }} บาท</span>
                     </div>
+<<<<<<< HEAD
                     <hr />
                   <button class="btn btn-danger"
         @click="deleteCart(ct.cartId)">
@@ -23,40 +24,51 @@
         @click="confirmOrder(ct.cartId)">
     <i class="bi-currency-dollar"></i> ยืนยันสั่งสินค้า
 </button>
+=======
+                    <hr style="border-color: #334155;" />
+                    <!-- ปุ่มลบตะกร้า -->
+                    <a class="btn btn-outline-danger fw-bold" onclick="return confirm('ยืนยันลบตะกร้า')">
+                        <i class="bi-cart-x-fill"></i> ลบตะกร้าสินค้า
+                    </a>
+                    <a class="btn text-white fw-bold float-end" style="background-color: #F97316; border: none;" onclick="return confirm('ยืนยันสั่งสินค้า')">
+                        <i class="bi-currency-dollar"></i> ยืนยันสั่งสินค้า
+                    </a>
+>>>>>>> d792dcd303e78961fe9b69ab0d68c3b21c39c308
                 </div>
             </div> <!--card-->
         </div> <!---v for  -->
    
-        <!-- Detail -->
-        <table class="table  mt-3 ">
+        <!-- Detail Table -->
+        <table class="table table-dark table-borderless align-middle mt-4" style="background-color: transparent;">
             <thead>
-            <tr class="bg-secondary bg-opacity-10">
-                <td></td>
-                <td>สินค้า</td>
-                <td></td>
-                <td class="text-end">ราคาต่อหน่วย</td>
-                <td class="text-center">จำนวน</td>
-                <td class="text-end">เป็นเงิน</td>
-                <td></td>
-            </tr>
+                <tr style="background-color: #1E293B; color: #94A3B8; height: 40px;">
+                    <th class="ps-3"></th>
+                    <th>รหัสสินค้า</th>
+                    <th>สินค้า</th>
+                    <th class="text-end">ราคาต่อหน่วย</th>
+                    <th class="text-center">จำนวน</th>
+                    <th class="text-end">เป็นเงิน</th>
+                    <th class="text-center"></th>
+                </tr>
             </thead>
             <tbody>
-            <tr v-for="(ctd, pdId) in cartDtl" :key="pdId">
-                <td>{{ ctd.row_number }}</td>
-                <td>{{ ctd.pdId }}</td>
-                <td>{{ ctd.pdName }}</td>
-                <td class="text-end">{{ ctd.price }}</td>
-                <td class="text-center">{{ ctd.qty }}</td>
-                <td class="text-end">{{ ((ctd.price * ctd.qty)??0).toLocaleString() }}</td>
-                <td class="text-center">
-                    <i class="bi-x-lg text-danger"></i>
-                </td>
-            </tr>
+                <tr v-for="(ctd, pdId) in cartDtl" :key="pdId" style="height: 40px; border-bottom: 1px solid #1E293B;" class="text-light">
+                    <td class="ps-3">{{ ctd.row_number }}</td>
+                    <!-- รหัสสินค้าเน้นสีส้ม -->
+                    <td style="color: #F97316;" class="fw-bold">{{ ctd.pdId }}</td>
+                    <td>{{ ctd.pdName }}</td>
+                    <td class="text-end">{{ ctd.price }}</td>
+                    <td class="text-center">{{ ctd.qty }}</td>
+                    <td class="text-end fw-bold" style="color: #F97316;">{{ ((ctd.price * ctd.qty)??0).toLocaleString() }}</td>
+                    <td class="text-center">
+                        <i class="bi-x-lg text-danger" role="button"></i>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div><!--v-if-->
-    <div v-else>
-        <div class="alert alert-danger mt-5">คุณไม่มีสิทธิ์ดูรายการนี้</div>
+    <div v-else class="container mt-5">
+        <div class="alert alert-danger shadow">คุณไม่มีสิทธิ์ดูรายการนี้</div>
     </div>
 </template>
 

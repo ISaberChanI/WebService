@@ -1,85 +1,38 @@
 
 <template>
     <div class="container">
-        <h1>{{ memEmail }}</h1>
-
-        <table class="table">
-            <thead>
-                <tr class="bg-secondary bg-opacity-10" style="height: 30px;">
-                    <td></td>
-                    <td>เลขที่</td>
-                    <td>วันที่</td>
-                    <td class="text-center">จำนวน</td>
-                    <td class="text-end">ยอดเงิน</td>
-                    <td class="text-center">CF</td>
-                    <td class="text-center">จัดการ</td>
-                </tr>
-            </thead>
-
-            <tbody>
-                <tr
-                    v-for="(ct, cartId) in cart"
-                    :key="cartId"
-                    style="height: 30px;"
-                >
-                    <td>{{ ct.row_number }}</td>
-
-                    <td>
-                        <router-link
-                            :to="`/cartshow/${ct.cartId}`"
-                            style="text-decoration: none;"
-                        >
-                            {{ ct.cartId }}
-                        </router-link>
-                    </td>
-
-                    <td>{{ formattedDate(ct.cartDate) }}</td>
-
-                    <td class="text-center">
-                        {{ ct.sqty ?? 0 }}
-                    </td>
-
-                    <td class="text-end">
-                        {{ Number(ct.sprice ?? 0).toLocaleString() }}
-                    </td>
-
-                    <!-- ปุ่มยืนยัน -->
-                    <td class="text-center">
-                        <button
-                            v-if="!ct.cartCf"
-                            class="btn btn-sm btn-success"
-                            @click="confirmOrder(ct.cartId)"
-                            title="ยืนยันคำสั่งซื้อ"
-                        >
-                            <i class="bi bi-check-lg"></i>
-                        </button>
-
-                        <i
-                            v-else
-                            class="bi bi-check-circle-fill text-success"
-                            title="ยืนยันแล้ว"
-                        ></i>
-                    </td>
-
-                    <!-- ปุ่มลบ -->
-                    <td class="text-center">
-                        <button
-                            class="btn btn-sm btn-outline-danger"
-                            @click="deleteCart(ct.cartId)"
-                            title="ลบตะกร้า"
-                        >
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </td>
-                </tr>
-
-                <tr v-if="cart.length === 0">
-                    <td colspan="7" class="text-center text-muted">
-                        ไม่พบรายการตะกร้าสินค้า
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    <h1>{{ memEmail }}</h1>
+    <table class="table">
+        <thead>
+        <tr class="bg-secondary bg-opacity-10" style="height: 30px;">
+            <td></td>
+            <td>เลขที่</td>
+            <td>วันที่</td>
+            <td class="text-center">จำนวน</td>
+            <td class="text-end">ยอดเงิน</td>
+            <td class="text-center">CF</td>
+            <td></td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(ct, cartId) in cart" :key="cartId" style="height: 30px;" >
+            <td>{{ ct.row_number }}</td>
+            <td><span class="text-primary">
+                    <router-link :to="`/cartshow/${ct.cartId }`" style="text-decoration: none;">
+                        {{ ct.cartId }}
+                    </router-link>
+                </span>
+            </td>
+            <td>{{ formattedDate(ct.cartDate) }}</td>
+            <td class="text-center">{{ (ct.sqty??0) }}</td>
+            <td class="text-end">{{ (ct.sprice??0).toLocaleString()}}</td>
+            <td class="text-center"><i :class="ct.cartCf ? 'bi bi-check-lg' : 'bi bi-dash'"></i></td>
+            <td class="text-center">
+                <i class="bi-x-lg text-danger"></i>
+            </td>
+        </tr>
+        </tbody>
+    </table>
     </div>
 </template>
 
