@@ -7,7 +7,7 @@ import PageMember from "@/components/PageMember.vue"
 import ProductShow from "@/components/ProductShow.vue"
 import CartShow from "@/components/CartShow.vue"
 import CartList from "@/components/CartList.vue"
-import MemberList from "@/components/Memberlist.vue"
+import MemberList from "@/components/MemberList.vue"
 
 // ✅ เพิ่ม Import สำหรับการ จัดการสินค้า (Admin)
 import ProductAdd from "@/components/ProductAdd.vue"
@@ -63,7 +63,12 @@ const routes = [
         path: '/productedit/:pdId',
         name: 'ProductEdit',
         component: ProductEdit
-    }
+    },
+    {
+        path: '/memberlist/',
+        name: 'MembereList',
+        component: MemberList
+    },
 ]
 
 const router = createRouter({

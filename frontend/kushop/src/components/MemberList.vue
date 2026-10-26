@@ -18,7 +18,6 @@
         <div v-for="(mem, index) in members" :key="index" class="col-lg-4 col-md-6 col-sm-12 mt-3">
             <div class="card shadow-lg" style="width: 18rem; background-color: #1E293B; border: 1px solid #334155;">
                 
-                <!-- 🌟 ใช้ @error เพื่อดักจับกรณีที่รูปของสมาชิกคนนั้นไม่มีอยู่จริง (โหลดไม่ขึ้น) แล้วสลับไปใช้รูป default แทน -->
                 <img :src="`http://localhost:3000/img_mem/${mem.memEmail}.jpg`" 
                      @error="$event.target.src = 'http://localhost:3000/img_mem/default.jpg'"
                      class="card-img-top p-2 rounded" 
@@ -32,9 +31,19 @@
                         สิทธิ์: <span style="color: #F97316;" class="fw-bold">{{ mem.dutyId && mem.dutyId.toLowerCase() === 'admin' ? 'Admin' : 'Member' }}</span>
                     </p>
                     
-                    <router-link :to="{ path: '/members/detail', query: { email: mem.memEmail } }" style="text-decoration: none;">
-                        <div class="btn text-white fw-bold w-100" style="background-color: #F97316; border: none;">ดูรายละเอียด</div>
-                    </router-link>
+                    <!-- 🌟 ปุ่มจัดการสมาชิก (เปลี่ยนสถานะ & ดูประวัติการสั่งซื้อ) -->
+                    <div class="d-grid gap-2">
+                        <!-- ปุ่มเปลี่ยนสถานะ (ผูกกับฟังก์ชันสำหรับกดเปลี่ยนสิทธิ์/สถานะ) -->
+                        <button class="btn text-white fw-bold w-100" style="background-color: #F97316; border: none;" @click="changeStatus(mem.memEmail)">
+                            เปลี่ยนสถานะ
+                        </button>
+
+                        <!-- ปุ่มดูประวัติการสั่งซื้อ (ลิงก์ไปยังหน้าประวัติการสั่งซื้อโดยแนบอีเมลไป) -->
+                        <router-link :to="{ path: '/members/orders', query: { email: mem.memEmail } }" style="text-decoration: none;">
+                            <div class="btn btn-secondary fw-bold w-100">ดูประวัติการสั่งซื้อ</div>
+                        </router-link>
+                    </div>
+
                 </div>
             </div>
         </div>
