@@ -9,4 +9,12 @@ import MainMenu from "./components/MainMenu.vue";
   <router-view></router-view>
 </template>
 
-<style scoped></style>
+<style>
+
+body {
+  background-color: #090D16;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+</style>

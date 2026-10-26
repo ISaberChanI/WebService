@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg " style="background-color:azure">
+  <nav class="navbar navbar-expand-lg navbar-dark " style="background-color: #111827">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">Kizuna Hobbies</a>
       <button
@@ -107,5 +107,5 @@ const memLogout = async () => {
 </script>
 
 
-<style></style>
->
+<style>
+</style>
