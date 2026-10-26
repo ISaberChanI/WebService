@@ -119,6 +119,7 @@ export async function postCartDtl(req, res) {
   }
 }
 
+
 export async function sumCart(req, res) {
     const { id } = req.params;
     console.log(`GET SumCart ${id} is requested`);
@@ -149,6 +150,43 @@ export async function sumCart(req, res) {
         return res.status(500).json({ message: err.message, qty: 0, money: 0 });
     }
 }
+    console.log(`GET SumCart ${req.params.id} is requested`)
+
+    try {
+        if (!req.params.id || req.params.id === "undefined") {
+            return res.status(400).json({
+                error: true,
+                message: "cartId is required"
+            })
+        }
+
+        const result = await database.query({
+            text: `
+                SELECT
+                    COALESCE(SUM(qty), 0) AS qty,
+                    COALESCE(SUM(qty * price), 0) AS money
+                FROM "cartDtl"
+                WHERE "cartId" = $1
+            `,
+            values: [req.params.id]
+        })
+
+        console.log(result.rows[0])
+
+        return res.json({
+            id: req.params.id,
+            qty: result.rows[0].qty,
+            money: result.rows[0].money
+        })
+    } catch (err) {
+        console.error("sumCart error:", err)
+        return res.status(500).json({
+            error: true,
+            message: err.message
+        })
+    }
+}
+
 
 export async function getCart(req, res) {
   console.log(`GET Cart is Requested`)

@@ -36,8 +36,14 @@
                     <button class="btn btn-primary" @click="chkLogin()">
                         <i class="bi bi-cart lead"></i> ใส่ตะกร้า&nbsp;
                     </button>
-                    <button v-if="authStore.isAdmin" class="btn btn-warning float-end"><i class="bi bi-pencil-fill lead"></i>
-                        แก้ไข&nbsp;&nbsp;</button>
+                   <button
+    v-if="authStore.isAdmin"
+    class="btn btn-warning float-end"
+    @click="editProduct(pd.pdId)"
+>
+    <i class="bi bi-pencil-fill lead"></i>
+    แก้ไข
+</button>
                 </div>
             </div>
         </div>
@@ -47,7 +53,7 @@
 
 <script setup>
     import { onMounted, ref } from 'vue'; // import function ref มาจาก vue
-    import { useRoute } from 'vue-router' //useRoute มีไว้เพื่อ อ่าน ข้อมูล useRouter มีไว้เพื่อ สั่งการ ให้เปลี่ยนComponent
+    import { useRoute,useRouter } from 'vue-router' //useRoute มีไว้เพื่อ อ่าน ข้อมูล useRouter มีไว้เพื่อ สั่งการ ให้เปลี่ยนComponent
     import { useCartStore } from '@/stores/cartStore';
     import axios from 'axios';
     import { useAuthStore } from '@/stores/authStore';
@@ -63,7 +69,9 @@
     const cartId=ref(null)
     const backendMessage=ref(null)
 
+const router = useRouter()
 
+<<<<<<< HEAD
     // ฟังก์ชันดึงสินค้าตาม Brand ID
     const getProductsByBrand = async (brandId) => {
         try {
@@ -77,6 +85,14 @@
     };
 
 
+=======
+const editProduct = (pdId) => {
+    router.push({
+        name: 'ProductEdit',
+        params: { pdId: pdId }
+    })
+}
+>>>>>>> 37d7a53672eb39d97d3143427a2bdaf3f4b7ecad
     // เริ่มทำงานเมื่อเกิดการ mount Component
     onMounted(async ()=>{
         id.value= route.params.pdId
