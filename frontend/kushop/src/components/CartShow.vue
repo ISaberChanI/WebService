@@ -1,5 +1,6 @@
 <template>
-    <div v-if="memEmail && memEmail === cusId" class="container mt-4">
+    <!-- แสดงหน้าจอเมื่อผู้ใช้เป็นเจ้าของตะกร้า หรือเป็น Admin -->
+    <div v-if="memEmail && (memEmail === cusId || isAdmin)" class="container mt-4">
 
         <!-- Cart Master -->
         <div v-for="ct in cart" :key="ct.cartId" class="mt-4">
@@ -49,8 +50,8 @@
                         ยืนยันสั่งสินค้า
                     </button>
 
-                    <span v-else class="badge bg-success float-end p-2">
-                        <i class="bi bi-check-circle-fill"></i>
+                    <span v-else class="badge bg-success float-end p-2 fs-6">
+                        <i class="bi bi-check-circle-fill me-1"></i>
                         ยืนยันคำสั่งซื้อแล้ว
                     </span>
 
@@ -60,10 +61,10 @@
         </div>
 
         <!-- Cart Detail -->
-        <table class="table table-dark table-borderless align-middle mt-4">
+        <table class="table table-dark table-borderless align-middle mt-4 shadow-sm">
             <thead>
                 <tr style="background-color: #1E293B; color: #94A3B8;">
-                    <th class="ps-3"></th>
+                    <th class="ps-3">ลำดับ</th>
                     <th>รหัสสินค้า</th>
                     <th>สินค้า</th>
                     <th class="text-end">ราคาต่อหน่วย</th>
@@ -75,12 +76,12 @@
 
             <tbody>
                 <tr
-                    v-for="ctd in cartDtl"
+                    v-for="(ctd, index) in cartDtl"
                     :key="ctd.pdId"
                     class="text-light"
                     style="border-bottom: 1px solid #1E293B;"
                 >
-                    <td class="ps-3">{{ ctd.row_number }}</td>
+                    <td class="ps-3">{{ ctd.row_number || (index + 1) }}</td>
 
                     <td class="fw-bold" style="color: #F97316;">
                         {{ ctd.pdId }}
@@ -100,7 +101,6 @@
 
                     <td class="text-center">
                         <button
-                        
                             class="btn btn-sm btn-outline-danger"
                             @click="deleteCartDtl(ctd)"
                             :disabled="busy || isConfirmed"
@@ -112,7 +112,7 @@
                 </tr>
 
                 <tr v-if="cartDtl.length === 0">
-                    <td colspan="7" class="text-center text-secondary">
+                    <td colspan="7" class="text-center text-secondary py-4">
                         ไม่มีสินค้าในตะกร้า
                     </td>
                 </tr>
@@ -121,7 +121,8 @@
     </div>
 
     <!-- Loading -->
-    <div v-else-if="loading" class="container mt-5 text-center">
+    <div v-else-if="loading" class="container mt-5 text-center text-white">
+        <div class="spinner-border text-warning me-2" role="status"></div>
         กำลังโหลดข้อมูล...
     </div>
 
@@ -134,184 +135,160 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router' //useRoute มีไว้เพื่อ อ่าน ข้อมูล useRouter มีไว้เพื่อ สั่งการ ให้เปลี่ยนหน้า
+import { onMounted, ref, computed } from 'vue';
+import { useRoute } from 'vue-router'
 import axios from 'axios';
+import { useCartStore } from '@/stores/cartStore'
+
 axios.defaults.withCredentials = true
 
-
 const route = useRoute()
-const cart=ref([])//รับข้อมูล Master
-const cartDtl=ref([]) //รับข้อมูล Detail
+const cartStore = useCartStore()
 
+const cart = ref([])       // รับข้อมูล Master
+const cartDtl = ref([])    // รับข้อมูล Detail
 
-const cartId=ref(null) //ข้อมูลจาก Database
-const cusId=ref(null) //ข้อมูลจาก Database
+const cartId = ref(null)   // ข้อมูลจาก URL Params
+const cusId = ref(null)    // ข้อมูลเจ้าของตะกร้าจาก Database
+const memEmail = ref(null) // อีเมลของผู้ใช้งานที่กำลัง Login
+const dutyId = ref(null)   // สิทธิ์ของผู้ใช้งาน (member / admin)
 
+// ✅ ตัวแปรสถานะที่เพิ่มเข้ามาเพื่อแก้ไข Error
+const loading = ref(true)
+const busy = ref(false)
 
-const memEmail=ref(null) //ข้อมูลจาก Cookie ที่ Login
+// ✅ Computed ตรวจสอบว่าเป็น Admin หรือไม่
+const isAdmin = computed(() => dutyId.value?.toLowerCase() === 'admin')
 
+// ✅ Computed ตรวจสอบว่าตะกร้านี้ยืนยันคำสั่งซื้อไปแล้วหรือยัง
+const isConfirmed = computed(() => cart.value[0]?.cartCf || false)
 
-const formattedDate=(dateStr)=> {
+const formattedDate = (dateStr) => {
+    if (!dateStr) return '';
     const date = new Date(dateStr);
     const year = date.getFullYear();
-    const month = String(date.getMonth()+ 1).padStart(2, '0'); // เดือนเริ่มต้นที่ 0, จึงต้อง +1
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
-onMounted(async ()=>{
-    await getMember() // ตรวจสอบผู้ใช้ -->อ่านค่าจาก Cookie
-    cartId.value = route.params.cartId //อ่านค่า Cart จาก URL ที่ส่งมา
-    console.log("CartShow:"+cartId.value)
-    await getCart() // อ่านข้อมูลตะกร้า Master
-    await getCartDtl() // อ่านรายละเอียดตะกร้า Detail
+
+onMounted(async () => {
+    loading.value = true
+    await getMember()                   // ตรวจสอบผู้ใช้จาก Cookie
+    cartId.value = route.params.cartId  // อ่านค่า Cart จาก URL
+    if (cartId.value) {
+        await getCart()                 // อ่านข้อมูลตะกร้า Master
+        await getCartDtl()              // อ่านรายละเอียดตะกร้า Detail
+    }
+    loading.value = false
 })
 
-
-const getCart=async ()=>{
-    console.log('Get Cart:'+cartId.value)
-    await axios.get(`http://localhost:3000/carts/getcart/${cartId.value}`)
-        .then(res => {
-            cart.value = res.data
+const getCart = async () => {
+    try {
+        const res = await axios.get(`http://localhost:3000/carts/getcart/${cartId.value}`)
+        cart.value = res.data
+        if (cart.value.length > 0) {
             cusId.value = cart.value[0].cusId // อ่านค่าว่าลูกค้าของเอกสารนี้เป็นใคร
-        })
-        .catch(err => {  console.error(err); });      
-}
-const getCartDtl=async ()=>{
-    console.log('Get Cart Detail:'+cartId.value)
-    await axios.get(`http://localhost:3000/carts/getcartdtl/${cartId.value}`)
-        .then(res => {
-            cartDtl.value = res.data
-        })
-        .catch(err => {  console.error(err); });      
-}
-const getMember=async ()=>{
-    await axios.get(`http://localhost:3000/members/detail`)
-        .then((res)=>{
-            memEmail.value=res.data.memEmail
-        })
-        .catch(err=>console.log(err.message))
+        }
+    } catch (err) {
+        console.error(err);
+    }
 }
 
+const getCartDtl = async () => {
+    try {
+        const res = await axios.get(`http://localhost:3000/carts/getcartdtl/${cartId.value}`)
+        cartDtl.value = res.data
+    } catch (err) {
+        console.error(err);
+    }
+}
 
-
-import { useCartStore } from '@/stores/cartStore' 
-const cartStore = useCartStore()
+const getMember = async () => {
+    try {
+        const res = await axios.get(`http://localhost:3000/members/detail`)
+        memEmail.value = res.data.memEmail
+        dutyId.value = res.data.dutyId
+    } catch (err) {
+        console.error(err.message)
+    }
+}
 
 const deleteCart = async (id) => {
-    if (!confirm("ยืนยันลบตะกร้าสินค้าใช่หรือไม่?")) {
-        return;
-    }
+    if (!confirm("ยืนยันลบตะกร้าสินค้าใช่หรือไม่?")) return;
 
+    busy.value = true
     try {
-        console.log("Delete Cart:", id);
-
-        const res = await axios.delete(
-            `http://localhost:3000/deletecart/${id}`
-        );
+        const res = await axios.delete(`http://localhost:3000/deletecart/${id}`);
 
         if (res.data.deleteOK) {
             alert("ลบตะกร้าสินค้าสำเร็จ");
-
             cart.value = [];
             cartDtl.value = [];
-
-            // 2. เพิ่มส่วนนี้: อัปเดตค่าใน Store เป็น 0 เพื่อสะกิด watch() และรีเซ็ตจำนวนสินค้า
             cartStore.theQty = 0;
-            // (ถ้ามีเก็บ cartId ใน store สามารถรีเซ็ตด้วยได้ เช่น cartStore.cartId = null)
-
         } else {
             alert(res.data.message || "ลบตะกร้าสินค้าไม่สำเร็จ");
         }
-
     } catch (err) {
         console.error("Delete Cart Error:", err);
-
-        alert(
-            err.response?.data?.message ||
-            "ลบตะกร้าสินค้าไม่สำเร็จ"
-        );
+        alert(err.response?.data?.message || "ลบตะกร้าสินค้าไม่สำเร็จ");
+    } finally {
+        busy.value = false
     }
 };
-
-
-
-
-
 
 const confirmOrder = async (id) => {
     if (!confirm('ยืนยันคำสั่งซื้อใช่หรือไม่?')) return;
 
+    busy.value = true
     try {
-        const res = await axios.put(
-            `http://localhost:3000/confirm/${id}`
-        );
+        const res = await axios.put(`http://localhost:3000/confirm/${id}`);
 
-        // เช็คการตอบกลับจาก Backend (res.data.confirmOK)
         if (res.data.confirmOK) {
             alert('ยืนยันคำสั่งซื้อสำเร็จ');
-
-            // 2. รีเซ็ตค่าใน Store เพื่อล้างปุ่มตะกร้าข้างบนทันที
             cartStore.theQty = 0;
-            
-            // (ถ้ามีเก็บ cartId ใน store แนะนำให้รีเซ็ตด้วย)
             if (cartStore.cartId) {
                 cartStore.cartId = null;
             }
-
-            // 3. โหลดข้อมูลรายการตะกร้าในหน้าปัจจุบันใหม่ (ถ้ามีฟังก์ชันนี้)
-            if (typeof getCartList === 'function') {
-                await getCartList();
-            }
+            // ✅ ดึงข้อมูลตะกร้าใหม่เพื่อเปลี่ยนสถานะปุ่มในหน้าจอ
+            await getCart();
         } else {
             alert(res.data.message || 'ยืนยันคำสั่งซื้อไม่สำเร็จ');
         }
     } catch (err) {
         console.error('Confirm Order Error:', err);
-        alert(
-            err.response?.data?.message ||
-            'เกิดข้อผิดพลาดในการยืนยันคำสั่งซื้อ'
-        );
+        alert(err.response?.data?.message || 'เกิดข้อผิดพลาดในการยืนยันคำสั่งซื้อ');
+    } finally {
+        busy.value = false
     }
 };
 
-
-
-
 const deleteCartDtl = async (ctd) => {
-    if (!confirm('ยืนยันลบสินค้านี้')) {
-        return
-    }
+    if (!confirm('ยืนยันลบสินค้านี้')) return;
 
+    busy.value = true
     try {
-        await axios.delete(
-            `http://localhost:3000/carts/${cartId.value}/${ctd.pdId}`
-        )
+        await axios.delete(`http://localhost:3000/carts/${cartId.value}/${ctd.pdId}`)
 
-        // ลบสินค้าออกจากหน้าจอ
-        cartDtl.value = cartDtl.value.filter(
-            item => item.pdId !== ctd.pdId
-        )
+        // ลบสินค้าออกจาก Array รายการย่อย
+        cartDtl.value = cartDtl.value.filter(item => item.pdId !== ctd.pdId)
 
-        // 2. เพิ่มส่วนนี้: อัปเดตค่าใน Store เพื่อสะกิด watch() ในปุ่มตะกร้าให้ทำงาน
-        // คำนวณจำนวนชิ้นทั้งหมดที่เหลืออยู่ในตะกร้า (หรือส่งจำนวนรายการ cartDtl.value.length)
+        // อัปเดตจำนวนสินค้าใน Pinia Store
         const totalQty = cartDtl.value.reduce((sum, item) => sum + item.qty, 0)
-        cartStore.theQty = totalQty // เปลี่ยนค่า theQty ใน Store
+        cartStore.theQty = totalQty
+
+        // ✅ ดึงข้อมูล Master ใหม่ เพื่อให้อัปเดต sqty และ sprice ด้านบนการ์ด
+        await getCart()
 
         alert('ลบสินค้าเรียบร้อยแล้ว')
-
     } catch (err) {
         console.error(err)
         alert(err.response?.data?.message || 'ไม่สามารถลบสินค้าได้')
+    } finally {
+        busy.value = false
     }
 }
-
-
-
-
 </script>
 
-
-<style lang="scss" scoped>
-
+<style scoped>
 </style>
