@@ -8,7 +8,8 @@ import PageMember from "@/components/PageMember.vue"
 import ProductShow from "../components/ProductShow.vue"
 import CartShow from "@/components/CartShow.vue"
 import CartList from "../components/CartList.vue"
-import MemberList from "@/components/Memberlist.vue"
+import ProductEdit from "@/components/ProductEdit.vue"
+
 const routes = [
     {
         path:'/',
@@ -52,10 +53,11 @@ const routes = [
         component:CartList
     },
     {
-        path:'/memberList',
-        name:'MemberList',
-        component:MemberList
-    },
+    path: '/productedit/:pdId',
+    name: 'ProductEdit',
+    component: ProductEdit
+},
+   
 
 
 ]
