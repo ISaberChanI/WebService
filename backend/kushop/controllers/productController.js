@@ -176,24 +176,22 @@ export async function getAllProduct(req, res) {
             SELECT p.*,
             (
                 SELECT row_to_json(brand_obj) FROM (
-                    SELECT "brandId","brandName" From brands
-                    WHERE "brandId" = p."brandId"
-                )brand_obj
+                    SELECT "brandId", "brandName" FROM brands
+                    WHERE TRIM(LOWER("brandId")) = TRIM(LOWER(p."brandId"))
+                ) brand_obj
             ) AS brand,
             (
                 SELECT row_to_json(pdt_obj) FROM (
-                    SELECT "pdTypeId","pdTypeName" From "pdTypes"
-                    WHERE "pdTypeId" = p."pdTypeId"
-                )pdt_obj
+                    SELECT "pdTypeId", "pdTypeName" FROM "pdTypes"
+                    WHERE TRIM(LOWER("pdTypeId")) = TRIM(LOWER(p."pdTypeId"))
+                ) pdt_obj
             ) AS pdt
             FROM products p
             ORDER BY "pdId"
-        
         `
         const result = await database.query(strQry)
         return res.status(200).json(result.rows)
-    }
-    catch (err) {
+    } catch (err) {
         return res.status(500).json({
             ok: false,
             message: err.message
