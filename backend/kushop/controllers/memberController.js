@@ -228,3 +228,42 @@ export async function getSearchMember(req, res) {
         })
     }
 }
+
+export async function changeMemberStatus(req, res) {
+    const { email } = req.body;
+    console.log(`PUT /members/status for email: ${email} is requested.`);
+    
+    try {
+        // 1. ตรวจสอบ dutyId ปัจจุบันของสมาชิกคนนี้
+        const checkResult = await database.query({
+            text: 'SELECT "dutyId" FROM members WHERE "memEmail" = $1',
+            values: [email]
+        });
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ ok: false, message: 'ไม่พบข้อมูลสมาชิก' });
+        }
+
+        const currentDuty = checkResult.rows[0].dutyId;
+        // สลับสถานะ: ถ้าเป็น admin ให้เปลี่ยนเป็น member ถ้าไม่ใช่ให้เป็น admin
+        const newDuty = currentDuty && currentDuty.toLowerCase() === 'admin' ? 'member' : 'admin';
+
+        // 2. อัปเดต dutyId ใหม่ลง Database
+        await database.query({
+            text: 'UPDATE members SET "dutyId" = $1 WHERE "memEmail" = $2',
+            values: [newDuty, email]
+        });
+
+        return res.status(200).json({ 
+            ok: true, 
+            message: 'เปลี่ยนสถานะสำเร็จ', 
+            newDuty: newDuty 
+        });
+    }
+    catch (err) {
+        return res.status(500).json({
+            ok: false,
+            message: err.message
+        })
+    }
+}
