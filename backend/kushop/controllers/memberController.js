@@ -202,3 +202,29 @@ export async function getAllMember(req, res) {
         })
     }
 }
+
+export async function getSearchMember(req, res) {
+    console.log(`GET /members/search = ${req.params.id} is requested.`)
+    
+    try {
+        const result = await database.query({
+            text:` 
+                SELECT m.*
+                FROM members m
+                WHERE m."dutyId" = 'member'
+                AND (
+                    m."memEmail" ILIKE $1 
+                    OR m."memName" ILIKE $1
+                )
+            `,
+            values:[`%${req.params.id}%`]
+        })
+        return res.status(200).json(result.rows)
+    }
+    catch (err) {
+        return res.status(500).json({
+            ok: false,
+            message: err.message
+        })
+    }
+}
