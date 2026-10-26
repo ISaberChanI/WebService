@@ -197,3 +197,137 @@ export async function getCartByCus(req, res) {
       })
   }
 }
+
+
+
+export async function deleteCart(req, res) {
+  console.log(`DELETE Cart ${req.params.id} is requested`);
+
+  const client = await database.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // ลบรายละเอียดสินค้าในตะกร้าก่อน
+    await client.query({
+      text: `DELETE FROM "cartDtl" WHERE "cartId" = $1`,
+      values: [req.params.id],
+    });
+
+    //ลบตะกร้าสินค้า
+    const result = await client.query({
+      text: `DELETE FROM carts WHERE "cartId" = $1`,
+      values: [req.params.id],
+    });
+
+    
+    if (result.rowCount === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        deleteOK: false,
+        message: "ไม่พบตะกร้าสินค้า",
+      });
+    }
+
+ 
+    await client.query("COMMIT");
+
+    return res.json({
+      deleteOK: true,
+      message: "ลบตะกร้าสินค้าสำเร็จ",
+    });
+
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+
+    console.error("deleteCart error:", err);
+
+    return res.status(500).json({
+      deleteOK: false,
+      message: err.message,
+    });
+
+  } finally {
+   
+    client.release();
+  }
+}
+
+
+export async function deleteCartDtl(req, res) {
+  console.log(`DELETE CartDtl is requested`);
+
+  try {
+    const result = await database.query({
+      text: `DELETE FROM "cartDtl"
+             WHERE "cartId" = $1 AND "pdId" = $2`,
+      values: [req.params.cartId, req.params.pdId],
+    });
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        deleteOK: false,
+        message: "ไม่พบสินค้าในตะกร้า",
+      });
+    }
+
+    return res.json({
+      deleteOK: true,
+      message: "ลบสินค้าออกจากตะกร้าสำเร็จ",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      deleteOK: false,
+      message: err.message,
+    });
+  }
+}
+
+
+
+
+
+
+
+export async function confirmOrder(req, res) {
+  const cartId = req.params.id;
+
+  console.log("Confirm order cartId:", cartId);
+
+  try {
+    const result = await database.query({
+      text: `
+        UPDATE carts
+        SET "cartCf" = true
+        WHERE "cartId" = $1
+          AND "cartCf" IS DISTINCT FROM true
+        RETURNING "cartId"
+      `,
+      values: [cartId],
+    });
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        confirmOK: false,
+        message: "ไม่พบตะกร้า หรือยืนยันคำสั่งซื้อไปแล้ว",
+      });
+    }
+
+    return res.json({
+      confirmOK: true,
+      message: "ยืนยันคำสั่งซื้อสำเร็จ",
+      cartId: result.rows[0].cartId,
+    });
+
+  } catch (err) {
+    console.error("Confirm Order Error:", err);
+
+    return res.status(500).json({
+      confirmOK: false,
+      message: err.message || "เกิดข้อผิดพลาดในการยืนยันคำสั่งซื้อ",
+    });
+  }
+}
+
+
