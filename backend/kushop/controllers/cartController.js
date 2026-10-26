@@ -334,6 +334,7 @@ export async function confirmOrder(req, res) {
 
 export async function delCartDtl(req, res) {
     const { cartId, pdId } = req.params;
+    
     try {
         const result = await database.query({
             text: `DELETE FROM "cartDtl" WHERE "cartId" = $1 AND "pdId" = $2`,

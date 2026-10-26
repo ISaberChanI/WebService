@@ -193,6 +193,9 @@ const getMember=async ()=>{
 
 
 
+import { useCartStore } from '@/stores/cartStore' 
+const cartStore = useCartStore()
+
 const deleteCart = async (id) => {
     if (!confirm("ยืนยันลบตะกร้าสินค้าใช่หรือไม่?")) {
         return;
@@ -208,9 +211,13 @@ const deleteCart = async (id) => {
         if (res.data.deleteOK) {
             alert("ลบตะกร้าสินค้าสำเร็จ");
 
-          
             cart.value = [];
             cartDtl.value = [];
+
+            // 2. เพิ่มส่วนนี้: อัปเดตค่าใน Store เป็น 0 เพื่อสะกิด watch() และรีเซ็ตจำนวนสินค้า
+            cartStore.theQty = 0;
+            // (ถ้ามีเก็บ cartId ใน store สามารถรีเซ็ตด้วยได้ เช่น cartStore.cartId = null)
+
         } else {
             alert(res.data.message || "ลบตะกร้าสินค้าไม่สำเร็จ");
         }
@@ -254,6 +261,7 @@ const confirmOrder = async (id) => {
 
 
 
+
 const deleteCartDtl = async (ctd) => {
     if (!confirm('ยืนยันลบสินค้านี้')) {
         return
@@ -264,10 +272,15 @@ const deleteCartDtl = async (ctd) => {
             `http://localhost:3000/carts/${cartId.value}/${ctd.pdId}`
         )
 
-        // ลบสินค้าออกจากหน้าจอทันที
+        // ลบสินค้าออกจากหน้าจอ
         cartDtl.value = cartDtl.value.filter(
             item => item.pdId !== ctd.pdId
         )
+
+        // 2. เพิ่มส่วนนี้: อัปเดตค่าใน Store เพื่อสะกิด watch() ในปุ่มตะกร้าให้ทำงาน
+        // คำนวณจำนวนชิ้นทั้งหมดที่เหลืออยู่ในตะกร้า (หรือส่งจำนวนรายการ cartDtl.value.length)
+        const totalQty = cartDtl.value.reduce((sum, item) => sum + item.qty, 0)
+        cartStore.theQty = totalQty // เปลี่ยนค่า theQty ใน Store
 
         alert('ลบสินค้าเรียบร้อยแล้ว')
 
@@ -276,6 +289,8 @@ const deleteCartDtl = async (ctd) => {
         alert(err.response?.data?.message || 'ไม่สามารถลบสินค้าได้')
     }
 }
+
+
 
 
 </script>
