@@ -19,7 +19,7 @@
             type="text" 
             class="form-control bg-secondary text-white border-0" 
             v-model="product.pdId" 
-            placeholder="เช่น PD001" 
+            placeholder="เช่น 001" 
             required
           >
         </div>
@@ -55,19 +55,43 @@
             type="text" 
             class="form-control bg-secondary text-white border-0" 
             v-model="product.brandId" 
-            placeholder="เช่น B001"
+            placeholder="เช่น B01"
           >
         </div>
 
         <!-- รหัสประเภทสินค้า (pdTypeId) -->
-        <div class="mb-4">
+        <div class="mb-3">
           <label class="form-label">รหัสประเภทสินค้า (pdTypeId)</label>
           <input 
             type="text" 
             class="form-control bg-secondary text-white border-0" 
             v-model="product.pdTypeId" 
-            placeholder="เช่น T001"
+            placeholder="เช่น T01"
           >
+        </div>
+
+        <!-- 📷 ส่วนเลือกรูปภาพและปุ่มอัปโหลดรูปภาพ -->
+        <div class="mb-4">
+          <label class="form-label">รูปภาพสินค้า (.jpg)</label>
+          <div class="input-group">
+            <input 
+              type="file" 
+              class="form-control bg-secondary text-white border-0" 
+              accept="image/*"
+              @change="onFileChange"
+            >
+            <button 
+              type="button" 
+              class="btn btn-warning fw-bold text-dark" 
+              @click="uploadFile"
+            >
+              <i class="bi bi-upload me-1"></i> อัปโหลดรูป
+            </button>
+          </div>
+          <!-- ข้อความแจ้งเตือนการ Upload -->
+          <div v-if="fileMessage" class="mt-2 text-info small fw-bold">
+            <i class="bi bi-info-circle me-1"></i>{{ fileMessage }}
+          </div>
         </div>
 
         <!-- ปุ่มกดดำเนินการ -->
@@ -101,6 +125,42 @@ const product = ref({
 });
 
 const errorMessage = ref('');
+const file = ref(null);
+const fileMessage = ref('');
+const imageTimestamp = ref(Date.now());
+
+// 1. อ่านค่าจาก input file
+const onFileChange = (e) => {
+  file.value = e.target.files[0];
+};
+
+// 2. ฟังก์ชัน Upload รูปภาพสินค้า
+const uploadFile = async () => {
+  if (!product.value.pdId.trim()) {
+    fileMessage.value = "กรุณากรอกรหัสสินค้า (pdId) ก่อนอัปโหลดรูปภาพ";
+    return;
+  }
+  if (!file.value) {
+    fileMessage.value = "กรุณาเลือกไฟล์เพื่อ Upload";
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("pdId", product.value.pdId);
+  formData.append("file", file.value);
+
+  try {
+    const response = await axios.post("http://localhost:3000/products/uploadImg", formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    
+    fileMessage.value = response.data.message || "Upload รูปภาพสำเร็จ";
+    imageTimestamp.value = Date.now();
+  } catch (err) {
+    console.error(err);
+    fileMessage.value = "Upload รูปภาพไม่สำเร็จ";
+  }
+};
 
 // ฟังก์ชันส่งข้อมูลไปยัง API POST /products
 const handleSubmit = async () => {
@@ -109,14 +169,17 @@ const handleSubmit = async () => {
   try {
     const response = await axios.post('http://localhost:3000/products', product.value);
     
-    // Status 201 Created ตามที่ Backend ส่งมา
+    // หากเลือกรูปค้างไว้ จะทำการอัปโหลดให้อัตโนมัติตอนกดบันทึกสินค้าด้วย
+    if (file.value && product.value.pdId) {
+      await uploadFile();
+    }
+
     if (response.status === 201) {
       alert('เพิ่มสินค้าเรียบร้อยแล้ว');
-      router.push('/product'); // ย้ายกลับไปหน้ารายการสินค้า
+      router.push('/product');
     }
   } catch (err) {
     if (err.response) {
-      // ดักจับ Status Code 409 (รหัสสินค้าซ้ำ) และ 422 (ข้อมูลไม่ครบ)
       if (err.response.status === 409) {
         errorMessage.value = `รหัสสินค้า "${product.value.pdId}" มีในระบบแล้ว`;
       } else if (err.response.status === 422) {
