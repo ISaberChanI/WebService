@@ -4,35 +4,24 @@ import jwt from "jsonwebtoken"
 import multer from "multer"
 
 // upload part
-// 1. การกำหนดค่า storage (พื้นที่จัดเก็บไฟล์)
 const storage = multer.diskStorage({
-    // destination: กำหนดโฟลเดอร์ปลายทางที่จะเก็บไฟล์
     destination: function (req, file, cb) {
-        // cb = callback function
-        // cb(null, 'img_mem') หมายถึง: ไม่มี error (null) และให้เก็บไฟล์ในโฟลเดอร์ 'img_mem'
         cb(null, 'img_mem')
     },
-   
-    // filename: กำหนดชื่อไฟล์ที่จะบันทึก
     filename: function (req, file, cb) {
-        // req.body.memEmail คือการดึงค่า email จาก form data ที่ส่งมา
-        // ตัวอย่าง: ถ้า memEmail = "test@gmail.com" ไฟล์จะถูกบันทึกเป็น "test@gmail.com.jpg"
-        const filename = `${req.body.memEmail}.jpg`
-        // กำหนดชื่อไฟล์ผ่าน callback
+        // 🌟 1. ดึงอีเมลจาก req.user ที่ได้มาจาก verifyToken (ปลอดภัยกว่าใช้ req.body.memEmail)
+        const email = req.user?.memEmail || req.body.memEmail
+        const filename = `${email}.jpg`
         cb(null, filename)
     }
 })
 
-
-// 2. การกำหนดค่า uploader
 const upload = multer({
-    storage: storage,  // ใช้ storage configuration ที่กำหนดไว้
+    storage: storage,  
 }).single('file');    
-// single('file') หมายถึงรับอัปโหลดไฟล์เดียว และ field name ใน form ต้องชื่อ 'file'
 
-//3.Method ที่ให้ Frontend เรียกใช้
 export async function uploadMember(req, res) {
-   console.log("Upload Member Image")
+    console.log("Upload Member Image for email:", req.user?.memEmail)
     upload(req, res, (err) => {
         if (err) {
             return res.status(400).json({ message: err.message });
@@ -40,7 +29,6 @@ export async function uploadMember(req, res) {
         res.status(200).json({ message: 'File uploaded successfully!' });
     });
 }
-
 
 export async function getMember(req, res) {
     console.log('GET /members/detail is requested.')
@@ -55,13 +43,11 @@ export async function getMember(req, res) {
             })
         }
 
-        // ตรวจสอบ Token ก่อน
         const decoded = jwt.verify(
             token,
             process.env.SECRET_KEY
         )
 
-        // ดึงชื่อและสถานะล่าสุดจาก Database
         const result = await database.query({
             text: `
                 SELECT "memEmail", "memName", "dutyId"
@@ -97,8 +83,6 @@ export async function getMember(req, res) {
         })
     }
 }
-
-
 
 export async function postMember(req, res) {
     console.log("POST /members is requested");
@@ -156,14 +140,13 @@ export async function postMember(req, res) {
     }
 }
 
-
 export async function loginMember(req, res) {
     console.log(`POST /Loginmembers is requested`)
     const bodyData = req.body
     try {
         if (!bodyData.loginName || !bodyData.password) {
             return res.json(
-                { message: `Login and Password is required`,login:false }
+                { message: `Login and Password is required`, login: false }
             )
         }
 
@@ -172,63 +155,60 @@ export async function loginMember(req, res) {
             values: [bodyData.loginName]
         })
         if (result.rowCount == 0)
-            return res.json({ message: `Login Fail`,login:false })
-        const loginOK=await bcrypt.compare(bodyData.password,result.rows[0].memHash)
-        if(loginOK)
-        {
-            const theuser={
-                memEmail:result.rows[0].memEmail,
-                memName:result.rows[0].memName,
-                dutyId:result.rows[0].dutyId
+            return res.json({ message: `Login Fail`, login: false })
+
+        const loginOK = await bcrypt.compare(bodyData.password, result.rows[0].memHash)
+        
+        if (loginOK) {
+            const theuser = {
+                memEmail: result.rows[0].memEmail,
+                memName: result.rows[0].memName,
+                dutyId: result.rows[0].dutyId
             }
-            const secret_key=process.env.SECRET_KEY
-            const token = jwt.sign(theuser,secret_key,{expiresIn:'1h'})
-            res.cookie('token',token,{
-                maxAge:3600000,
+            const secret_key = process.env.SECRET_KEY
+            const token = jwt.sign(theuser, secret_key, { expiresIn: '1h' })
+            
+            // 🌟 ปรับปรุงการตั้งค่า Cookie ให้ยืดหยุ่นตาม Environment (Localhost ใช้ secure: false ได้)
+            res.cookie('token', token, {
+                maxAge: 3600000,
                 httpOnly: true,
-                secure: true,
-                sameSite:'strict'
+                secure: process.env.NODE_ENV === 'production', // ถ้าขึ้น Production ค่อยเป็น true
+                sameSite: 'lax' // เปลี่ยนจาก strict เป็น lax เพื่อป้องกันปัญหาการบล็อกคุกกี้ข้ามพอร์ตใน Localhost
             })
-            res.json({
+
+            return res.json({
                 message: "Login Success",
                 login: true,
-                dutyId: result.rows[0].dutyId // 👈 เพิ่มบรรทัดนี้
+                dutyId: result.rows[0].dutyId
             });
         }
-        else{
-            res.clearCookie('token',{
+        else {
+            res.clearCookie('token', {
                 httpOnly: true,
-                secure: true,
-                sameSite:'strict'
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax'
             })
-            res.json({message:"Login Fail",login:false})
-
-
-        
-        //const datetime = new Date()
-        //bodyData.createDate = new Date()
-        //bodyData.message = "ok"
-        //res.json(bodyData)
+            return res.json({ message: "Login Fail", login: false })
         }
     }
     catch (err) {
         return res.status(500).json({ message: err.message })
     }
-
 }
 
 export async function logoutMember(req, res) {
     console.log(`GET /logoutMember is requested.`)
     try {
+        // 🌟 ปรับ Options ของ clearCookie ให้ตรงกับตอน res.cookie ทุกประการ
         res.clearCookie('token', {
-            http: true,
-            secure: true,
-            sameSite: 'strict'
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
         })
-        res.json({ message: `Login Fail`, login: false})
+        return res.json({ message: `Logout Success`, login: false })
     }
     catch (err) {
-        return res.json({
+        return res.status(500).json({
             message: err.message
         })
     }
@@ -279,7 +259,6 @@ export async function getSearchMember(req, res) {
     }
 }
 
-
 export async function changeMemberStatus(req, res) {
     const { email } = req.body
 
@@ -293,7 +272,6 @@ export async function changeMemberStatus(req, res) {
             })
         }
 
-        // ตรวจสอบสถานะปัจจุบัน
         const checkResult = await database.query({
             text: `
                 SELECT "memEmail", "dutyId"
@@ -317,7 +295,6 @@ export async function changeMemberStatus(req, res) {
                 ? 'member'
                 : 'admin'
 
-        // อัปเดตและอ่านค่าที่บันทึกได้กลับมา
         const updateResult = await database.query({
             text: `
                 UPDATE members
@@ -346,14 +323,11 @@ export async function changeMemberStatus(req, res) {
     }
 }
 
-
-
-
-
-
 export async function updateMemberName(req, res) {
     try {
-        const { email, name } = req.body
+        // 🌟 2. ดึงอีเมลจาก Token (req.user.memEmail) หากไม่มีค่อยไปอ่านจาก req.body (เผื่อกรณีแอดมินแก้ให้คนอื่น)
+        const email = req.user?.memEmail || req.body.email
+        const { name } = req.body
 
         if (!email || !name?.trim()) {
             return res.status(400).json({

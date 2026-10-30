@@ -1,7 +1,6 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
-// import pkg from "pg"
 import database from "./services/database.js"
 import dotenv from "dotenv"
 import bodyParser from "body-parser"
@@ -10,53 +9,54 @@ import productRoute from "./routes/productRoute.js"
 import memberRoute from "./routes/memberRoute.js"
 import cartRoute from "./routes/cartRoute.js"
 
-// import ส่วนที่ติดตั้งเข้ามา
+// import ส่วนที่ติดตั้งเข้ามาสำหรับ Swagger
 import swaggerUI from "swagger-ui-express"
 import yaml from "yaml"
-// ใช้ File
 import fs from "fs"
 
-
-// const {Pool} =pkg
 dotenv.config()
 
-const app=express()
-const port=process.env.PORT 
+const app = express()
+const port = process.env.PORT || 3000 // 🌟 เพิ่ม Fallback port กันกรณี .env โหลดไม่ทัน
 
+// 🌟 ตั้งค่า CORS อนุญาตให้ส่ง Cookie ข้ามพอร์ตได้
 app.use(cors({
-    origin:['http://localhost', 'http://127.0.0.1',
-            'http://localhost:5173','http://127.0.0.1:5173',
-            'http://localhost:4173','http://127.0.0.1:4173'],
-    methods:['GET','POST','PUT','DELETE'],
-    credentials:true
+    origin: [
+        'http://localhost', 'http://127.0.0.1',
+        'http://localhost:5173', 'http://127.0.0.1:5173',
+        'http://localhost:4173', 'http://127.0.0.1:4173'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true // สำคัญมากสำหรับการส่งผ่าน Cookie (JWT Token)
 }))
-app.use("/img_pd",express.static("img_pd"))
-app.use("/img_mem",express.static("img_mem"))
 
+// Static Folders สำหรับรูปภาพ
+app.use("/img_pd", express.static("img_pd"))
+app.use("/img_mem", express.static("img_mem"))
+
+// Middleware พื้นฐาน
 app.use(bodyParser.json())
+app.use(cookieParser()) // 🌟 ต้องวางไว้ก่อนที่ Router จะใช้งาน
 
-app.use(cookieParser());
-
+// Routes
 app.use(productRoute)
 app.use(memberRoute)
 app.use(cartRoute)
 
-// swagger กำหนด file config ของตัว swagger
-const swaggerfile = fs.readFileSync('services/swagger.yaml','utf-8')
+// Swagger Documentation Config
+const swaggerfile = fs.readFileSync('services/swagger.yaml', 'utf-8')
 const swaggerDoc = yaml.parse(swaggerfile)
-// กำหนด path ที่จะให้เรียกหน้า Document ขึ้นมา
-app.use('/api-docs',swaggerUI.serve,swaggerUI.setup(swaggerDoc))
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDoc))
 
-
-app.get('/',(reg,res)=>{
+// Root Route (🌟 แก้ไขตัวสะกดจาก reg เป็น req)
+app.get('/', (req, res) => {
     console.log(`GET / is requested.`)
-    res.status(200).json(
-        {
-            message:"ok"
-        }
-    )
+    res.status(200).json({
+        message: "ok"
+    })
 })
 
-app.listen(port,()=>{
-    console.log(`Server is listen on PORT :${port}`)
+// Start Server
+app.listen(port, () => {
+    console.log(`Server is listening on PORT : ${port}`)
 })

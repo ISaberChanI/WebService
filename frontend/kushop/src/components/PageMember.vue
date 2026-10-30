@@ -1,5 +1,3 @@
-
-
 <template>
   <div class="row mt-4">
     <!-- ฝั่งซ้าย: ข้อมูลสมาชิก -->
@@ -111,7 +109,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
@@ -141,7 +138,7 @@ onMounted(async () => {
     await chkImage()
 })
 
-// โหลดข้อมูลสมาชิก
+// โหลดข้อมูลสมาชิก (ดึงผ่าน Cookie Token อัตโนมัติ)
 const getMember = async () => {
     try {
         const res = await axios.get(
@@ -154,7 +151,7 @@ const getMember = async () => {
         dutyId.value = res.data.dutyId
         login.value = res.data.login
     } catch (err) {
-        console.error(err)
+        console.error('Get Member Error:', err)
     }
 }
 
@@ -182,16 +179,11 @@ const saveMemberName = async () => {
         return
     }
 
-    if (!memEmail.value) {
-        nameSuccess.value = false
-        nameMessage.value = 'ไม่พบอีเมลสมาชิก'
-        return
-    }
-
     savingName.value = true
     nameMessage.value = null
 
     try {
+        // ส่งแค่ชื่อใหม่ไป (Backend จะดึงอีเมลจาก Token ให้เอง)
         const res = await axios.put(
             'http://localhost:3000/members/name',
             {
@@ -203,7 +195,6 @@ const saveMemberName = async () => {
         if (res.data.ok) {
             memName.value = res.data.member?.memName || trimmedName
 
-            // อัปเดตชื่อที่แสดงในหน้าเว็บ
             if (member.value) {
                 member.value.memName = memName.value
             }
@@ -213,14 +204,12 @@ const saveMemberName = async () => {
             editingName.value = false
         } else {
             nameSuccess.value = false
-            nameMessage.value =
-                res.data.message || 'เปลี่ยนชื่อไม่สำเร็จ'
+            nameMessage.value = res.data.message || 'เปลี่ยนชื่อไม่สำเร็จ'
         }
     } catch (err) {
-        console.error(err)
+        console.error('Save Name Error:', err)
         nameSuccess.value = false
-        nameMessage.value =
-            err.response?.data?.message || 'ไม่สามารถเปลี่ยนชื่อได้'
+        nameMessage.value = err.response?.data?.message || 'ไม่สามารถเปลี่ยนชื่อได้'
     } finally {
         savingName.value = false
     }
@@ -238,18 +227,16 @@ const uploadFile = async () => {
         return
     }
 
-    if (!memEmail.value) {
-        fileMessage.value = 'ไม่พบอีเมลสมาชิก'
-        return
-    }
-
     const formData = new FormData()
-    formData.append('memEmail', memEmail.value)
     formData.append('file', file.value)
+    // ส่ง memEmail ไปด้วยเผื่อกรณี Backward compatibility แต่ Backend ใช้ Token เป็นหลัก
+    if (memEmail.value) {
+        formData.append('memEmail', memEmail.value)
+    }
 
     try {
         const response = await axios.post(
-            'http://localhost:3000/members/uploadImg',
+            'http://localhost:3000/members/uploadimg',
             formData,
             {
                 headers: {
@@ -258,13 +245,12 @@ const uploadFile = async () => {
             }
         )
 
-        fileMessage.value =
-            response.data.message || 'Upload สำเร็จ'
+        fileMessage.value = response.data.message || 'Upload สำเร็จ'
 
         await chkImage()
         imageTimestamp.value = Date.now()
     } catch (err) {
-        console.error(err)
+        console.error('Upload Error:', err)
         fileMessage.value = 'Upload ไม่สำเร็จ'
     }
 }

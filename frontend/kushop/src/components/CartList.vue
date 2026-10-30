@@ -1,4 +1,3 @@
-
 <template>
     <div class="container">
     <h1>{{ memEmail }}</h1>
@@ -39,12 +38,12 @@
 
 <script setup>
     import { onMounted, ref } from 'vue';
-    import { useRoute } from 'vue-router'; // 1. Import useRoute เพิ่ม
+    import { useRoute } from 'vue-router';
     import axios from 'axios';
 
     axios.defaults.withCredentials = true;
 
-    const route = useRoute(); // 2. ประกาศตัวแปร route
+    const route = useRoute();
     const cart = ref([]);
     const memEmail = ref(null);
 
@@ -60,7 +59,7 @@
     };
 
     onMounted(async () => {
-        // 3. ตรวจสอบว่ามี email ส่งมาทาง query หรือไม่ (กรณี Admin กดดูของสมาชิกคนอื่น)
+        // 1. ตรวจสอบว่ามี email ส่งมาทาง query หรือไม่ (กรณี Admin กดดูของสมาชิกคนอื่น)
         if (route.query.email) {
             memEmail.value = route.query.email;
         } else {
@@ -73,12 +72,14 @@
 
     const getCartList = async () => {
         try {
-            const customer = { id: memEmail.value };
+            // 🌟 ปรับปรุงการเรียก API: ไม่ต้องส่ง Body แล้ว 
+            // แต่ถ้ามี route.query.email (Admin ดูให้คนอื่น) ให้แนบไปทาง query parameter แทน
+            let url = 'http://localhost:3000/carts/getcartbycus';
+            if (route.query.email) {
+                url += `?email=${encodeURIComponent(route.query.email)}`;
+            }
 
-            const res = await axios.post(
-                'http://localhost:3000/carts/getcartbycus',
-                customer
-            );
+            const res = await axios.post(url);
 
             cart.value = Array.isArray(res.data) ? res.data : [];
         } catch (err) {

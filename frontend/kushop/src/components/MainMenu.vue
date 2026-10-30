@@ -1,6 +1,3 @@
-นี่คือโค้ด Navbar ที่ปรับแก้เงื่อนไขให้ตรวจสอบ `dutyId` เป็น `'admin'` (แบบตัวอักษร) พร้อมใช้งานเรียบร้อยแล้วครับ:
-
-```vue
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #111827">
     <div class="container-fluid">
@@ -42,7 +39,7 @@
             </router-link>
           </li>
           <li class="nav-item" v-if="login">
-            <a href="#" @click="memLogout()" style="text-decoration: none">
+            <a href="#" @click.prevent="memLogout()" style="text-decoration: none">
               <div class="nav-link fw-bold">Logout</div>
             </a>
           </li>
@@ -74,9 +71,10 @@ const memName = ref(null);
 const dutyId = ref(null);
 const login = ref(false)
 
+// 🌟 คอยดักจับการเปลี่ยนแปลงสถานะจาก Pinia Store (เช่น ตอน Login สำเร็จ)
 watch(
   () => authStore.isLogin, () => {
-    console.log("Watch");
+    console.log("Auth Store Changed: Fetching member details...");
     getMember();
   }
 );
@@ -86,18 +84,22 @@ onMounted(async () => {
 });
 
 const getMember = async () => {
-  await axios
-    .get(`http://localhost:3000/members/detail`)
-    .then((res) => {
-      member.value = res.data;
-      memEmail.value = member.value.memEmail;
-      memName.value = member.value.memName;
-      dutyId.value = member.value.dutyId;
-      login.value = member.value.login
-    })
-    .catch((err) => console.log(err.message));
+  try {
+    const res = await axios.get('http://localhost:3000/members/detail');
+    member.value = res.data;
+    memEmail.value = member.value.memEmail;
+    memName.value = member.value.memName;
+    dutyId.value = member.value.dutyId;
+    login.value = member.value.login;
+  } catch (err) {
+    // ถ้า Token หมดอายุหรือไม่พบ ให้เคลียร์สถานะเป็น false
+    login.value = false;
+    memEmail.value = null;
+    memName.value = null;
+    dutyId.value = null;
+    // console.log("Not logged in or session expired.");
+  }
 };
-
 
 const memLogout = async () => {
   const cf = window.confirm("ต้องการออกจากระบบ?");
@@ -105,19 +107,20 @@ const memLogout = async () => {
   if (!cf) return;
 
   try {
+    // 1. เรียก API ลบ Cookie ที่ Backend
     await axios.get("http://localhost:3000/members/logout");
 
-    // ล้างสถานะใน Navbar ทันที
+    // 2. ล้างสถานะใน Navbar ทันที
     login.value = false;
     member.value = null;
     memEmail.value = null;
     memName.value = null;
     dutyId.value = null;
 
-    // ล้างสถานะใน Auth Store
+    // 3. ล้างสถานะใน Auth Store
     authStore.logout();
 
-    // กลับหน้า Home
+    // 4. กลับหน้า Home
     await router.push("/");
   } catch (err) {
     console.error(
@@ -126,7 +129,6 @@ const memLogout = async () => {
     );
   }
 };
-
 </script>
 
 <style>

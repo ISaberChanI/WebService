@@ -1,7 +1,7 @@
-import database from "../services/database.js";
+import database from "../services/database.js"
 
 export async function getProductByBrandId(req, res) {
-    console.log(`GET /products/${req.params.id} is requested.`)
+    console.log(`GET /products/brand/${req.params.id} is requested.`)
     try {
         const result = await database.query({
             text:` 
@@ -22,7 +22,8 @@ export async function getProductByBrandId(req, res) {
             WHERE p."brandId" ILIKE $1 `,
 
             values:[
-                req.params.id]
+                req.params.id
+            ]
         })
         return res.status(200).json(result.rows)
     }
@@ -34,10 +35,12 @@ export async function getProductByBrandId(req, res) {
     }
 }
 
-export async function deleteProduct(req,res) {
-    console.log(`DELETE /products/${req.params.id}`)
+export async function deleteProduct(req, res) {
+    // 🌟 ดึงอีเมลแอดมินจาก Token มาบันทึก Log
+    const adminEmail = req.user?.memEmail || 'Unknown Admin';
+    console.log(`DELETE /products/${req.params.id} requested by Admin: ${adminEmail}`);
+
     try{
-        const bodyData = req.body
         const result = await database.query({
             text:`  DELETE FROM "products" 
                     WHERE "pdId" = $1
@@ -53,15 +56,15 @@ export async function deleteProduct(req,res) {
         }
         return res.status(204).end()
 
-
     }catch(err){
         return res.status(500).json({ message: err.message })
     }
-    
 }
 
-export async function putProduct(req,res) {
-    console.log(`PUT /products/${req.params.id}`)
+export async function putProduct(req, res) {
+    const adminEmail = req.user?.memEmail || 'Unknown Admin';
+    console.log(`PUT /products/${req.params.id} requested by Admin: ${adminEmail}`);
+
     try{
         const bodyData = req.body
         const result = await database.query({
@@ -88,15 +91,13 @@ export async function putProduct(req,res) {
                 )
         }
         const datetime = new Date()
-        bodyData.updateDate=datetime
-        bodyData.message="ok"
+        bodyData.updateDate = datetime
+        bodyData.message = "ok"
         return res.status(201).json(bodyData)
-
 
     }catch(err){
         return res.status(500).json({ message: err.message })
     }
-    
 }
 
 export async function getProductById(req, res) {
@@ -200,7 +201,7 @@ export async function getAllProduct(req, res) {
 }
 
 export async function getThreeProduct(req, res) {
-    console.log(`GET /products is requested.`)
+    console.log(`GET /products/three is requested.`)
     try {
         const strQry = `
             SELECT p.*,
@@ -218,9 +219,7 @@ export async function getThreeProduct(req, res) {
             ) AS pdt
             FROM products p
             ORDER BY "pdId"
-            
             OFFSET 0 LIMIT 2
-        
         `
         const result = await database.query(strQry)
         return res.status(200).json(result.rows)
@@ -234,7 +233,9 @@ export async function getThreeProduct(req, res) {
 }
 
 export async function postProduct(req, res) {
-    console.log(`POST /products is requested`)
+    const adminEmail = req.user?.memEmail || 'Unknown Admin';
+    console.log(`POST /products requested by Admin: ${adminEmail}`);
+
     const bodyData = req.body
     try {
         if (!bodyData.pdId || !bodyData.pdName) {
@@ -252,7 +253,6 @@ export async function postProduct(req, res) {
                 { message: `Error pdId ${bodyData.pdId} is Exists` }
             )
         }
-
 
         const result = await database.query({
             text: `  INSERT INTO products ("pdId","pdName","pdPrice","pdTypeId","brandId")
@@ -273,5 +273,4 @@ export async function postProduct(req, res) {
     catch (err) {
         return res.status(500).json({ message: err.message })
     }
-
 }
