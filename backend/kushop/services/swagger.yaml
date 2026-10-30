@@ -7,78 +7,829 @@ servers:
   - url: http://localhost:3000/
     # description: My Localhost
 paths:
-  /products:
-    # GET All Product
-    get:
-      summary: Returns a list all of products.
-      # สามารถอธิบายรายละเอียดได้
-      # เครื่องหมาย | บอกว่าเป็นหลายบรรทัด
-      description: |
-        List all products in array of object format.<br>
-        Each product contains details like product ID, name, price, etc.
-      # ส่วนอธิบายว่าจะส่ง Status Cose อะไรกลับไปบ้าง
-      responses:
-        '200':    # status code
-          description: A JSON array of Products
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  # อ้างอิงไปที่ Component เพื่อแสดงรายละเอียด
-                  $ref: '#/components/schemas/products'  
-        # POST new product
+  #  สาธารณะ (Public)
+  /members:
     post:
-      summary: Creates a new Product.
+      summary: สมัครสมาชิกใหม่ (Register)
+      tags:
+        - Members (Public)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/new_product'   #component for create
+              type: object
+              required:
+                - memEmail
+                - memName
+                - password
+              properties:
+                memEmail:
+                  type: string
+                  format: email
+                  example: user@example.com
+                memName:
+                  type: string
+                  example: สมชาย ใจดี
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
       responses:
         '201':
-          description: Product is created.
+          description: สมัครสมาชิกสำเร็จ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: ข้อมูลไม่ครบถ้วน
         '409':
-          description: Product ID is existed.
+          description: อีเมลนี้มีอยู่ในระบบแล้ว
         '500':
-          description: Server Error
-
-  /products/{id}:
-    # GET Product by ID
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
     get:
-      summary: Returns the specify products.
-      # สามารถอธิบายรายละเอียดได้
-      # เครื่องหมาย |
-      description: |
-        Show a products in array of object format
-      # ส่วนกำหนด Parameter
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Product ID
-          schema:
-            type : string
-      # ส่วนอธิบายว่าจะส่ง Status Cose อะไรกลับไปบ้าง
+      summary: ดึงรายชื่อสมาชิกทั้งหมดที่มีสถานะเป็น member (Admin)
+      tags:
+        - Members (Admin)
       responses:
-        '200':    # status code
-          description: A JSON array of Products
+        '200':
+          description: ดึงข้อมูลสำเร็จ
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  # อ้างอิงไปที่ Component เพื่อแสดงรายละเอียด
-                  $ref: '#/components/schemas/products'
-        '404':    # status code
-          description: A product with the specified ID was not found.
-        '500':    # status code
-          description: Server error.  
+                  $ref: '#/components/schemas/MemberObject'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  /members/login:
+    post:
+      summary: เข้าสู่ระบบ (Login) และรับ Cookie Token
+      tags:
+        - Members (Public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - loginName
+                - password
+              properties:
+                loginName:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        '200':
+          description: เข้าสู่ระบบสำเร็จ (ตั้งค่า Cookie token ใน Browser)
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=abc123xyz; Path=/; HttpOnly; Secure; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+  /products:
+    get:
+      summary: ดึงข้อมูลสินค้าทั้งหมด (พร้อมข้อมูลแบรนด์และประเภทสินค้า)
+      tags:
+        - Products (Public)
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductObject'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+    post:
+      summary: เพิ่มสินค้าใหม่ (Admin)
+      tags:
+        - Products (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: เพิ่มสินค้าสำเร็จ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '422':
+          description: ข้อมูลไม่ครบถ้วน (ต้องมี pdId และ pdName)
+        '409':
+          description: รหัสสินค้า (pdId) นี้มีอยู่ในระบบแล้ว
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  /products/three:
+    get:
+      summary: ดึงข้อมูลสินค้าจำนวนจำกัด (ตัวอย่างดึง 2 ตัวแรก)
+      tags:
+        - Products (Public)
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductObject'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  /products/search/{id}:
+    get:
+      summary: ค้นหาสินค้าจากรหัส, ชื่อ หรือรายละเอียด (pdId, pdName, pdRemark)
+      tags:
+        - Products (Public)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: คำค้นหา (รหัสหรือชื่อสินค้าบางส่วน)
+          example: laptop
+      responses:
+        '200':
+          description: ค้นหาสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductObject'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  /products/brands/{id}:
+    get:
+      summary: ดึงข้อมูลสินค้าตามรหัสแบรนด์ (Brand ID)
+      tags:
+        - Products (Public)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: รหัสแบรนด์
+          example: brand01
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductObject'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  /products/{id}:
+    get:
+      summary: ดึงข้อมูลสินค้าตามรหัสสินค้า (pdId)
+      tags:
+        - Products (Public)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: รหัสสินค้า
+          example: PD001
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductObject'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+    put:
+      summary: แก้ไขข้อมูลสินค้า (Admin)
+      tags:
+        - Products (Admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: รหัสสินค้าที่ต้องการแก้ไข
+          example: PD001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: แก้ไขข้อมูลสินค้าสำเร็จ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: ไม่พบรหัสสินค้าที่ต้องการแก้ไข
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+    delete:
+      summary: ลบสินค้า (Admin)
+      tags:
+        - Products (Admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: รหัสสินค้าที่ต้องการลบ
+          example: PD001
+      responses:
+        '204':
+          description: ลบสินค้าสำเร็จ (No Content)
+        '404':
+          description: ไม่พบรหัสสินค้าที่ต้องการลบ
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  # ล็อกอินแล้ว (Protected User)
+  /members/detail:
+    get:
+      summary: ดึงข้อมูลส่วนตัวของสมาชิกปัจจุบันจาก Token Cookie
+      tags:
+        - Members (Protected)
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberDetailResponse'
+        '401':
+          description: กรุณาเข้าสู่ระบบ หรือ Session หมดอายุ
+
+  /members/logout:
+    get:
+      summary: ออกจากระบบ (ลบ Cookie Token)
+      tags:
+        - Members (Protected)
+      responses:
+        '200':
+          description: ออกจากระบบสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logout Success
+                  login:
+                    type: boolean
+                    example: false
+
+  /members/uploadimg:
+    post:
+      summary: อัปโหลดรูปภาพประจำตัวสมาชิก
+      tags:
+        - Members (Protected)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: ไฟล์รูปภาพ (.jpg)
+      responses:
+        '200':
+          description: อัปโหลดไฟล์สำเร็จ
+        '400':
+          description: ข้อผิดพลาดจาก Multer หรือไฟล์ไม่ถูกต้อง
+
+  /members/name:
+    put:
+      summary: เปลี่ยนชื่อสมาชิก
+      tags:
+        - Members (Protected)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: สมชาย ใจดีกว่าเดิม
+      responses:
+        '200':
+          description: เปลี่ยนชื่อสำเร็จ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateNameResponse'
+        '400':
+          description: กรุณาระบุชื่อใหม่
+        '404':
+          description: ไม่พบข้อมูลสมาชิก
+  
+  /carts/chkcart:
+    post:
+      summary: ตรวจสอบว่ามีตะกร้าสินค้าที่ค้างอยู่ (ยังไม่ได้ยืนยันคำสั่งซื้อ) หรือไม่
+      tags:
+        - Carts (Protected)
+      responses:
+        '200':
+          description: ตรวจสอบสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cartExist:
+                    type: boolean
+                    example: true
+                  cartId:
+                    type: string
+                    example: '202610300001'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  /carts/addcart:
+    post:
+      summary: สร้างตะกร้าสินค้าใหม่สำหรับผู้ใช้ที่ล็อกอิน
+      tags:
+        - Carts (Protected)
+      responses:
+        '200':
+          description: สร้างตะกร้าสินค้าสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cartOK:
+                    type: boolean
+                    example: true
+                  messageAddCart:
+                    type: string
+                    example: '202610300001'
+
+  /carts/addcartdtl:
+    post:
+      summary: เพิ่มสินค้าลงในตะกร้า (เพิ่มจำนวนหากมีอยู่แล้ว หรือสร้างใหม่หากยังไม่มี)
+      tags:
+        - Carts (Protected)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cartId
+                - pdId
+                - pdPrice
+              properties:
+                cartId:
+                  type: string
+                  example: '202610300001'
+                pdId:
+                  type: string
+                  example: 'PD001'
+                pdPrice:
+                  type: number
+                  format: float
+                  example: 32900
+      responses:
+        '200':
+          description: บันทึกรายการสินค้าในตะกร้าสำเร็จ
+
+  /carts/sumcart/{id}:
+    get:
+      summary: รวมจำนวนชิ้นและราคารวมทั้งหมดของตะกร้าสินค้า
+      tags:
+        - Carts (Protected)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: รหัสตะกร้า (cartId)
+          example: '202610300001'
+      responses:
+        '200':
+          description: ดึงข้อมูลสรุปสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: '202610300001'
+                  qty:
+                    type: integer
+                    example: 3
+                  money:
+                    type: number
+                    example: 98700
+
+  /carts/getcart/{id}:
+    get:
+      summary: ดึงข้อมูลหัวข้อตะกร้าพร้อมผลรวมสรุปตามรหัสตะกร้า
+      tags:
+        - Carts (Protected)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: รหัสตะกร้า (cartId)
+          example: '202610300001'
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CartSummaryObject'
+
+  /carts/getcartdtl/{id}:
+    get:
+      summary: ดึงรายการสินค้าทั้งหมดที่อยู่ในตะกร้า (Cart Detail)
+      tags:
+        - Carts (Protected)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: รหัสตะกร้า (cartId)
+          example: '202610300001'
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CartDetailItemObject'
+
+  /carts/getcartbycus:
+    post:
+      summary: ดึงรายการตะกร้าสินค้าทั้งหมดของลูกค้า (ตาม Token หรือระบุอีเมล)
+      tags:
+        - Carts (Protected)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: ดึงข้อมูลสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CartSummaryObject'
+
+  /carts/{cartId}/{pdId}:
+    delete:
+      summary: ลบสินค้าออกจากตะกร้า (ตรวจสอบสถานะการยืนยันคำสั่งซื้อก่อนลบ)
+      tags:
+        - Carts (Protected)
+      parameters:
+        - in: path
+          name: cartId
+          required: true
+          schema:
+            type: string
+          example: '202610300001'
+        - in: path
+          name: pdId
+          required: true
+          schema:
+            type: string
+          example: 'PD001'
+      responses:
+        '200':
+          description: ลบสินค้าสำเร็จ
+        '400':
+          description: ไม่สามารถลบสินค้าได้เนื่องจากยืนยันคำสั่งซื้อแล้ว
+        '404':
+          description: ไม่พบสินค้าในตะกร้า
+
+  /deletecart/{id}:
+    delete:
+      summary: ลบตะกร้าสินค้าทั้งใบรวมถึงรายการสินค้าข้างในทั้งหมด (Transaction)
+      tags:
+        - Carts (Protected)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: '202610300001'
+      responses:
+        '200':
+          description: ลบตะกร้าสินค้าสำเร็จ
+        '404':
+          description: ไม่พบตะกร้าสินค้า
+
+  /deletecartdtl/{cartId}/{pdId}:
+    delete:
+      summary: ลบสินค้าเฉพาะรายการที่เลือกในตะกร้า
+      tags:
+        - Carts (Protected)
+      parameters:
+        - in: path
+          name: cartId
+          required: true
+          schema:
+            type: string
+          example: '202610300001'
+        - in: path
+          name: pdId
+          required: true
+          schema:
+            type: string
+          example: 'PD001'
+      responses:
+        '200':
+          description: ลบสินค้าออกจากตะกร้าสำเร็จ
+        '404':
+          description: ไม่พบสินค้าในตะกร้า
+
+  /confirm/{id}:
+    put:
+      summary: ยืนยันคำสั่งซื้อ (เปลี่ยนสถานะ cartCf เป็น true)
+      tags:
+        - Carts (Protected)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: '202610300001'
+      responses:
+        '200':
+          description: ยืนยันคำสั่งซื้อสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  confirmOK:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: ยืนยันคำสั่งซื้อสำเร็จ
+                  cartId:
+                    type: string
+                    example: '202610300001'
+        '404':
+          description: ไม่พบตะกร้า หรือยืนยันคำสั่งซื้อไปแล้ว
+
+
+  # (Admin Only)
+
+  /members/search/{id}:
+    get:
+      summary: ค้นหาสมาชิกตามอีเมลหรือชื่อ (Admin)
+      tags:
+        - Members (Admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: คำค้นหา (อีเมลหรือชื่อบางส่วน)
+          example: somchai
+      responses:
+        '200':
+          description: ค้นหาสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberObject'
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์
+
+  /members/status:
+    put:
+      summary: เปลี่ยนสถานะสิทธิ์ผู้ใช้งานระหว่าง member และ admin (Admin)
+      tags:
+        - Members (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: เปลี่ยนสถานะสำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: เปลี่ยนสถานะสำเร็จ
+                  newDuty:
+                    type: string
+                    example: admin
+        '400':
+          description: กรุณาระบุอีเมลสมาชิก
+        '404':
+          description: ไม่พบข้อมูลสมาชิก
+        '500':
+          description: เกิดข้อผิดพลาดจากเซิร์ฟเวอร์ 
+  
+  /products/uploadImg:
+    post:
+      summary: อัปโหลดรูปภาพสินค้า (ใช้ formData ร่วมกับ pdId ใน body)
+      tags:
+        - Products (Admin)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - pdId
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: ไฟล์รูปภาพสินค้า (.jpg)
+                pdId:
+                  type: string
+                  description: รหัสสินค้า (ใช้ตั้งชื่อไฟล์ภาพ)
+                  example: PD001
+      responses:
+        '200':
+          description: Upload รูปสินค้าเรียบร้อยแล้ว
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Upload รูปสินค้าเรียบร้อยแล้ว
+        '400':
+          description: ข้อผิดพลาดจากการอัปโหลดไฟล์
 
 # กำหนด Component ที่ต้องการแสดงรายละเอียด
 components:
   schemas:
+    RegisterResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Regist Success
+        regist:
+          type: boolean
+          example: true
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Login Success
+        login:
+          type: boolean
+          example: true
+        dutyId:
+          type: string
+          example: member
+
+    MemberDetailResponse:
+      type: object
+      properties:
+        memEmail:
+          type: string
+          format: email
+          example: user@example.com
+        memName:
+          type: string
+          example: สมชาย ใจดี
+        dutyId:
+          type: string
+          example: member
+        login:
+          type: boolean
+          example: true
+
+    UpdateNameResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: เปลี่ยนชื่อสำเร็จ
+        member:
+          type: object
+          properties:
+            memEmail:
+              type: string
+              example: user@example.com
+            memName:
+              type: string
+              example: สมชาย ใจดีกว่าเดิม
+
+    MemberObject:
+      type: object
+      properties:
+        memEmail:
+          type: string
+          format: email
+          example: user@example.com
+        memName:
+          type: string
+          example: สมชาย ใจดี
+        dutyId:
+          type: string
+          example: member
+        memHash:
+          type: string
+          example: $2b$11$... (hashed password)
     products:
       type: object
       properties:
@@ -131,3 +882,208 @@ components:
           type: string
         pdTypeName:
           type: string
+    Cart:
+        type: object
+        properties:
+          cartId:
+            type: string
+            example: "202610300001"
+          cusId:
+            type: string
+            format: email
+            example: "customer@example.com"
+          cartDate:
+            type: string
+            format: date-time
+          cartCf:
+            type: boolean
+            example: false
+          sqty:
+            type: integer
+            example: 3
+          sprice:
+            type: number
+            format: float
+            example: 1250.00
+    CartDtl:
+      type: object
+      properties:
+        row_number:
+          type: integer
+          example: 1
+        cartId:
+          type: string
+          example: "202610300001"
+        pdId:
+          type: string
+          example: "P001"
+        pdName:
+          type: string
+          example: "Wireless Mechanical Keyboard"
+        qty:
+          type: integer
+          example: 2
+        price:
+          type: number
+          format: float
+          example: 590.00
+    
+    BrandObject:
+      type: object
+      properties:
+        brandId:
+          type: string
+          example: B001
+        brandName:
+          type: string
+          example: Apple
+
+    PdTypeObject:
+      type: object
+      properties:
+        pdTypeId:
+          type: string
+          example: T001
+        pdTypeName:
+          type: string
+          example: Smartphone
+
+    ProductObject:
+      type: object
+      properties:
+        pdId:
+          type: string
+          example: PD001
+        pdName:
+          type: string
+          example: iPhone 15
+        pdPrice:
+          type: number
+          format: float
+          example: 32900
+        pdRemark:
+          type: string
+          example: เครื่องศูนย์ไทย ประกัน 1 ปี
+        pdTypeId:
+          type: string
+          example: T001
+        brandId:
+          type: string
+          example: B001
+        brand:
+          $ref: '#/components/schemas/BrandObject'
+        pdt:
+          $ref: '#/components/schemas/PdTypeObject'
+
+    ProductInput:
+      type: object
+      required:
+        - pdId
+        - pdName
+      properties:
+        pdId:
+          type: string
+          example: PD001
+        pdName:
+          type: string
+          example: iPhone 15
+        pdPrice:
+          type: number
+          format: float
+          example: 32900
+        pdRemark:
+          type: string
+          example: เครื่องศูนย์ไทย ประกัน 1 ปี
+        pdTypeId:
+          type: string
+          example: T001
+        brandId:
+          type: string
+          example: B001
+
+    ProductResponse:
+      type: object
+      properties:
+        pdId:
+          type: string
+          example: PD001
+        pdName:
+          type: string
+          example: iPhone 15
+        pdPrice:
+          type: number
+          example: 32900
+        pdRemark:
+          type: string
+          example: เครื่องศูนย์ไทย ประกัน 1 ปี
+        pdTypeId:
+          type: string
+          example: T001
+        brandId:
+          type: string
+          example: B001
+        message:
+          type: string
+          example: ok
+        crateDate:
+          type: string
+          format: date-time
+          example: '2026-03-31T10:00:00.000Z'
+        updateDate:
+          type: string
+          format: date-time
+          example: '2026-03-31T12:00:00.000Z'
+    
+    CartSummaryObject:
+      type: object
+      properties:
+        row_number:
+          type: integer
+          example: 1
+        cartId:
+          type: string
+          example: '202610300001'
+        cusId:
+          type: string
+          format: email
+          example: user@example.com
+        cartDate:
+          type: string
+          format: date-time
+          example: '2026-10-30T10:00:00.000Z'
+        cartCf:
+          type: boolean
+          example: false
+        sqty:
+          type: integer
+          example: 3
+        sprice:
+          type: number
+          format: float
+          example: 98700
+
+    CartDetailItemObject:
+      type: object
+      properties:
+        row_number:
+          type: integer
+          example: 1
+        pdId:
+          type: string
+          example: 'PD001'
+        pdName:
+          type: string
+          example: 'iPhone 15'
+        qty:
+          type: integer
+          example: 2
+        price:
+          type: number
+          format: float
+          example: 32900
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

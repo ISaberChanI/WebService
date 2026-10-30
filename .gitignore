@@ -1,3 +1,4 @@
-backend/kushop/node_modules
-backend/kushop/.env
-frontend/kushop/node_modules
+.vscode/
+/backend/kushop/node_modules
+/backend/kushop/.env
+/frontend/kushop/node_modules
