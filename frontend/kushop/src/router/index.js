@@ -86,8 +86,8 @@ const router = createRouter({
     routes
 })
 
-// 🌟 Navigation Guard: ดักตรวจสอบสิทธิ์ก่อนเปลี่ยนหน้าทุกครั้ง
-router.beforeEach(async (to, from, next) => {
+// 🌟 Navigation Guard: ดักตรวจสอบสิทธิ์ก่อนเปลี่ยนหน้าทุกครั้ง (รูปแบบใหม่ Vue Router 4)
+router.beforeEach(async (to) => {
     // ถ้าหน้านี้ต้องการสิทธิ์ Admin หรือต้องการการล็อกอิน
     if (to.meta.requiresAdmin || to.meta.requiresAuth) {
         try {
@@ -98,22 +98,22 @@ router.beforeEach(async (to, from, next) => {
                 // ถ้าหน้านี้บังคับ Admin แต่ผู้ใช้เป็นแค่ Member ทั่วไป
                 if (to.meta.requiresAdmin && res.data.dutyId?.toLowerCase() !== 'admin') {
                     alert('เฉพาะ Admin เท่านั้นที่สามารถเข้าถึงหน้านี้ได้')
-                    return next('/') // ดีดกลับหน้าแรก
+                    return '/' // ดีดกลับหน้าแรก
                 }
                 // ถ้าผ่านเงื่อนไข อนุญาตให้ผ่านไปได้
-                return next()
+                return true
             } else {
                 alert('กรุณาเข้าสู่ระบบก่อน')
-                return next('/login')
+                return '/login'
             }
         } catch (err) {
             alert('Session หมดอายุ กรุณาเข้าสู่ระบบใหม่')
-            return next('/login')
+            return '/login'
         }
-    } else {
-        // หน้าสาธารณะทั่วไป (Home, Product, Login, Register) เข้าได้ปกติ
-        next()
     }
+    
+    // หน้าสาธารณะทั่วไป (Home, Product, Login, Register) เข้าได้ปกติ
+    return true
 })
 
 export default router
